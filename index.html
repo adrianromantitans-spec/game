@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Devorator - Ultimate Edition & Pause</title>
+    <title>Neon Devorator - Smart Bots Edition</title>
     <style>
         * {
             box-sizing: border-box;
@@ -338,7 +338,7 @@
         <button id="btnOpenShop" class="menu-btn" style="border-color:#ff3; color:#ff3;">🛒 MAGAZIN</button>
     </div>
 
-    <!-- 2. Magazin cu Tab-uri Separate -->
+    <!-- 2. Magazin -->
     <div id="screen-shop" class="menu-overlay hidden">
         <h1 id="shopTitle" style="color:#ff3; text-shadow: 0 0 20px #ff3;">MAGAZIN</h1>
         
@@ -351,7 +351,7 @@
         <button id="btnCloseShop" class="menu-btn btn-primary">ÎNAPOI</button>
     </div>
 
-    <!-- 3. Ecran Opțiuni & Moduri de Joc -->
+    <!-- 3. Configurare -->
     <div id="screen-options" class="menu-overlay hidden">
         <h1 id="optTitle">CONFIGURARE</h1>
 
@@ -387,14 +387,14 @@
         <button id="btnBackToMain" class="menu-btn" style="margin-top:5px; border-color:#aaa; color:#aaa;">ÎNAPOI</button>
     </div>
 
-    <!-- 4. Ecran Pauză -->
+    <!-- 4. Pauză -->
     <div id="screen-pause" class="menu-overlay hidden">
         <h1 id="pauseTitle" style="color:#ff3; text-shadow: 0 0 20px #ff3;">JOCUL ESTE PE PAUZĂ</h1>
         <button id="btnResume" class="menu-btn btn-primary">CONTINUĂ JOCUL</button>
         <button id="btnQuitToMenu" class="menu-btn" style="margin-top:10px; border-color:#f36; color:#f36;">MENIU PRINCIPAL</button>
     </div>
 
-    <!-- 5. Ecran Game Over / Victorie -->
+    <!-- 5. Game Over / Victorie -->
     <div id="screen-gameover" class="menu-overlay hidden">
         <h1 id="gameOverTitle">GAME OVER</h1>
         <p id="gameOverSub" style="color:#ccc; margin-bottom:10px; text-align:center;">Ai fost mâncat!</p>
@@ -465,7 +465,7 @@
                 winTitle: "VICTORIE!",
                 winSub: "Ai supraviețuit și ai dominat harta!",
                 loseTitle: "GAME OVER",
-                loseSub: "Ai fost devorat sau prins!",
+                loseSub: "Ai fost devorat de un bot mai mare!",
                 btnRestart: "REÎNCEARCĂ",
                 ownedText: "Deținut",
                 equippedText: "Echipat"
@@ -494,7 +494,7 @@
                 winTitle: "VICTORY!",
                 winSub: "You survived and dominated the map!",
                 loseTitle: "GAME OVER",
-                loseSub: "You got eaten or caught!",
+                loseSub: "You were eaten by a bigger bot!",
                 btnRestart: "PLAY AGAIN",
                 ownedText: "Owned",
                 equippedText: "Equipped"
@@ -523,7 +523,7 @@
                 winTitle: "¡VICTORIA!",
                 winSub: "¡Sobreviviste y dominaste el mapa!",
                 loseTitle: "GAME OVER",
-                loseSub: "¡Fuiste devorado o atrapado!",
+                loseSub: "¡Fuiste devorado por un bot más grande!",
                 btnRestart: "JUGAR DE NUEVO",
                 ownedText: "Adquirido",
                 equippedText: "Equipado"
@@ -703,11 +703,20 @@
         window.addEventListener('resize', resize);
         resize();
 
+        function createBot() {
+            let bRadius = Math.random() > 0.4 ? (Math.random() * 15 + 10) : (Math.random() * 45 + 20);
+            return {
+                x: Math.random() * (MAP_SIZE - 200) + 100,
+                y: Math.random() * (MAP_SIZE - 200) + 100,
+                radius: bRadius,
+                angle: Math.random() * Math.PI * 2,
+                color: ['#f36', '#ff3', '#0ff', '#f90', '#3f9', '#a0f'][Math.floor(Math.random() * 6)]
+            };
+        }
+
         function initEntities() {
             bots = []; pacmanGuards = []; bossBot = null; food = []; powerups = []; traps = []; labirinthWalls = []; player.trail = [];
             MAP_SIZE = selectedMode === 'survival' ? 2500 : (selectedMode === 'pacman' ? 2000 : 3000);
-
-            let speedMult = selectedDifficulty === 'easy' ? 1.5 : (selectedDifficulty === 'mid' ? 2.5 : 4.0);
 
             if (selectedMode === 'pacman') {
                 for (let i = 0; i < 18; i++) {
@@ -738,21 +747,14 @@
                     radius: 70, vx: 2, vy: 2, baseSpeed: 2.0
                 };
             } else if (selectedMode !== 'pvp') {
-                for (let i = 0; i < (selectedMode === 'survival' ? 45 : 30); i++) {
-                    let bRadius = Math.random() > 0.3 ? (Math.random() * 25 + 10) : (Math.random() * 60 + 20);
-                    bots.push({
-                        x: Math.random() * (MAP_SIZE - 200) + 100,
-                        y: Math.random() * (MAP_SIZE - 200) + 100,
-                        radius: bRadius,
-                        angle: Math.random() * Math.PI * 2,
-                        baseSpeed: speedMult * (20 / bRadius), // Cei mici sunt mai rapizi
-                        color: ['#f36', '#ff3', '#0ff', '#f90', '#3f9'][Math.floor(Math.random() * 5)]
-                    });
+                // Generare 35 de boți activi
+                for (let i = 0; i < (selectedMode === 'survival' ? 50 : 35); i++) {
+                    bots.push(createBot());
                 }
             }
 
             if (selectedMode !== 'pacman') {
-                for (let i = 0; i < 400; i++) {
+                for (let i = 0; i < 450; i++) {
                     food.push({
                         x: Math.random() * (MAP_SIZE - 40) + 20,
                         y: Math.random() * (MAP_SIZE - 40) + 20,
@@ -919,7 +921,7 @@
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
-                    selectedDifficulty = e.target.getAttribute('data-diff');
+                selectedDifficulty = e.target.getAttribute('data-diff');
             });
         });
 
@@ -966,6 +968,95 @@
             ctx.arc(rightEyeX + Math.cos(angle)*1.5, rightEyeY + Math.sin(angle)*1.5, pupilRadius, 0, Math.PI * 2);
             ctx.fillStyle = '#000';
             ctx.fill();
+        }
+
+        // Boti cu Inteligenta Artificiala complet reaparata
+        function updateAndDrawBots() {
+            let speedMult = selectedDifficulty === 'easy' ? 1.8 : (selectedDifficulty === 'mid' ? 2.8 : 4.0);
+
+            for (let i = bots.length - 1; i >= 0; i--) {
+                let b = bots[i];
+
+                // Calculare viteza bazata pe marime
+                let moveSpeed = Math.max(1.2, (35 / b.radius) * speedMult);
+                let distToPlayer = Math.hypot(player.x - b.x, player.y - b.y);
+
+                // Logica de Decizie (AI)
+                if (b.radius > player.radius * 1.05 && distToPlayer < 500) {
+                    // TE VÂNEAZĂ activ dacă este mai mare!
+                    b.angle = Math.atan2(player.y - b.y, player.x - b.x);
+                } else if (player.radius > b.radius * 1.05 && distToPlayer < 350) {
+                    // FUGE de tine dacă ești mai mare!
+                    b.angle = Math.atan2(b.y - player.y, b.x - player.x);
+                } else {
+                    // Caută mâncarea cea mai apropiată pe o rază de 300px
+                    let closestFood = null;
+                    let minD = 300;
+                    for (let f of food) {
+                        let d = Math.hypot(f.x - b.x, f.y - b.y);
+                        if (d < minD) {
+                            minD = d;
+                            closestFood = f;
+                        }
+                    }
+
+                    if (closestFood) {
+                        b.angle = Math.atan2(closestFood.y - b.y, closestFood.x - b.x);
+                    } else {
+                        // Rătăcește fluid
+                        if (Math.random() < 0.03) {
+                            b.angle += (Math.random() - 0.5) * 1.5;
+                        }
+                    }
+                }
+
+                // Mișcare propriu-zisă
+                b.x += Math.cos(b.angle) * moveSpeed;
+                b.y += Math.sin(b.angle) * moveSpeed;
+
+                // Margini harta
+                if (b.x < b.radius) { b.x = b.radius; b.angle = Math.PI - b.angle; }
+                if (b.x > MAP_SIZE - b.radius) { b.x = MAP_SIZE - b.radius; b.angle = Math.PI - b.angle; }
+                if (b.y < b.radius) { b.y = b.radius; b.angle = -b.angle; }
+                if (b.y > MAP_SIZE - b.radius) { b.y = MAP_SIZE - b.radius; b.angle = -b.angle; }
+
+                // Verificare dacă botul mănâncă mâncarea
+                for (let j = food.length - 1; j >= 0; j--) {
+                    let f = food[j];
+                    if (Math.hypot(f.x - b.x, f.y - b.y) < b.radius + f.radius) {
+                        b.radius += 0.2; // Botul crește când mănâncă
+                        food.splice(j, 1);
+                        break;
+                    }
+                }
+
+                // Coliziune Bot cu Jucător
+                if (distToPlayer < player.radius + b.radius) {
+                    if (player.radius > b.radius * 1.05) {
+                        player.radius += b.radius * 0.35;
+                        bots.splice(i, 1);
+                        bots.push(createBot()); // Respawn bot nou
+                        playSound(1200, 'sine', 0.2);
+                        continue;
+                    } else if (b.radius > player.radius * 1.05) {
+                        gameRunning = false;
+                        document.getElementById('gameOverTitle').innerText = translations[currentLang].loseTitle;
+                        document.getElementById('gameOverSub').innerText = translations[currentLang].loseSub;
+                        document.getElementById('screen-gameover').classList.remove('hidden');
+                    }
+                }
+
+                // Randare Bot pe Ecran
+                let bScreenX = b.x - player.x + canvas.width / 2;
+                let bScreenY = b.y - player.y + canvas.height / 2;
+
+                ctx.beginPath();
+                ctx.arc(bScreenX, bScreenY, b.radius, 0, Math.PI * 2);
+                ctx.fillStyle = b.color;
+                ctx.fill();
+
+                drawEyes(bScreenX, bScreenY, b.radius, b.angle);
+            }
         }
 
         function gameLoop() {
@@ -1064,99 +1155,40 @@
                 ctx.shadowBlur = 0;
             }
 
-            // Mâncare pe hartă (Mâncată de jucător și de boți)
-            food.forEach((f, index) => {
+            // Repopulare mâncare continuă
+            if (food.length < 350 && selectedMode !== 'pacman') {
+                food.push({
+                    x: Math.random() * (MAP_SIZE - 40) + 20,
+                    y: Math.random() * (MAP_SIZE - 40) + 20,
+                    radius: 4, color: Math.random() > 0.5 ? '#3f9' : '#fc3'
+                });
+            }
+
+            // Desenează Mâncarea pentru Jucător
+            for (let i = food.length - 1; i >= 0; i--) {
+                let f = food[i];
                 let screenX = f.x - player.x + canvas.width / 2;
                 let screenY = f.y - player.y + canvas.height / 2;
 
                 if (Math.hypot(player.x - f.x, player.y - f.y) < player.radius + f.radius) {
-                    food.splice(index, 1);
+                    food.splice(i, 1);
                     player.radius += selectedMode === 'pacman' ? 0.5 : 0.2;
                     neonCoins += 1;
                     localStorage.setItem('nd_coins', neonCoins);
                     document.getElementById('coinsVal').innerText = neonCoins;
                     playSound(1000, 'sine', 0.1);
-                    return;
-                }
-
-                // Boții mănâncă și ei mâncarea de pe jos
-                for (let b of bots) {
-                    if (Math.hypot(b.x - f.x, b.y - f.y) < b.radius + f.radius) {
-                        b.radius += 0.15;
-                        food.splice(index, 1);
-                        break;
-                    }
+                    continue;
                 }
 
                 ctx.beginPath();
                 ctx.arc(screenX, screenY, f.radius, 0, Math.PI * 2);
                 ctx.fillStyle = f.color;
                 ctx.fill();
-            });
+            }
 
-            // Inteligență Artificială Completă pentru Boți
+            // Rulare Logică Boți (AI)
             if (selectedMode !== 'pacman' && selectedMode !== 'boss') {
-                bots.forEach((b, index) => {
-                    // Căutare inteligentă: verifică jucătorul sau alt bot în apropiere
-                    let distToPlayer = Math.hypot(player.x - b.x, player.y - b.y);
-                    let targetAngle = b.angle;
-
-                    if (b.radius > player.radius * 1.1 && distToPlayer < 400) {
-                        // Te vânează dacă e mai mare
-                        targetAngle = Math.atan2(player.y - b.y, player.x - b.x);
-                    } else if (player.radius > b.radius * 1.1 && distToPlayer < 300) {
-                        // Fuge de tine dacă ești mai mare
-                        targetAngle = Math.atan2(b.y - player.y, b.x - player.x);
-                    } else {
-                        // Caută mâncare apropiată sau rătăcește inteligent
-                        let nearestFood = null;
-                        let minDist = 250;
-                        for (let f of food) {
-                            let d = Math.hypot(b.x - f.x, b.y - f.y);
-                            if (d < minDist) {
-                                minDist = d;
-                                nearestFood = f;
-                            }
-                        }
-                        if (nearestFood) {
-                            targetAngle = Math.atan2(nearestFood.y - b.y, nearestFood.x - b.x);
-                        } else {
-                            if (Math.random() < 0.05) b.angle += (Math.random() - 0.5) * 2;
-                        }
-                    }
-
-                    b.angle = targetAngle;
-                    let currentSpeed = b.baseSpeed * (15 / b.radius); // Cu cât e mai mare, cu atât se mișcă mai greu
-                    b.x += Math.cos(b.angle) * Math.max(1, currentSpeed);
-                    b.y += Math.sin(b.angle) * Math.max(1, currentSpeed);
-
-                    if (b.x < b.radius || b.x > MAP_SIZE - b.radius) b.angle = Math.PI - b.angle;
-                    if (b.y < b.radius || b.y > MAP_SIZE - b.radius) b.angle = -b.angle;
-
-                    // Coliziune bot cu jucătorul
-                    if (distToPlayer < player.radius + b.radius) {
-                        if (player.radius > b.radius * 1.05) {
-                            player.radius += b.radius * 0.3;
-                            bots.splice(index, 1);
-                            playSound(1200, 'sine', 0.2);
-                        } else if (b.radius > player.radius * 1.05) {
-                            gameRunning = false;
-                            document.getElementById('gameOverTitle').innerText = translations[currentLang].loseTitle;
-                            document.getElementById('gameOverSub').innerText = translations[currentLang].loseSub;
-                            document.getElementById('screen-gameover').classList.remove('hidden');
-                        }
-                    }
-
-                    let bScreenX = b.x - player.x + canvas.width / 2;
-                    let bScreenY = b.y - player.y + canvas.height / 2;
-
-                    ctx.beginPath();
-                    ctx.arc(bScreenX, bScreenY, b.radius, 0, Math.PI * 2);
-                    ctx.fillStyle = b.color;
-                    ctx.fill();
-
-                    drawEyes(bScreenX, bScreenY, b.radius, b.angle);
-                });
+                updateAndDrawBots();
             }
 
             if (selectedMode === 'pacman') {
@@ -1198,6 +1230,7 @@
                 ctx.shadowBlur = 0;
             }
 
+            // Jucător
             ctx.beginPath();
             ctx.arc(canvas.width / 2, canvas.height / 2, player.radius, 0, Math.PI * 2);
             ctx.fillStyle = player.color;
@@ -1208,6 +1241,7 @@
 
             drawEyes(canvas.width / 2, canvas.height / 2, player.radius, player.angle || 0);
 
+            // Minimap
             mCtx.fillStyle = '#05050f';
             mCtx.fillRect(0, 0, minimapCanvas.width, minimapCanvas.height);
             let scaleM = minimapCanvas.width / MAP_SIZE;
