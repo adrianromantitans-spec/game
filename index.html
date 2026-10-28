@@ -214,12 +214,35 @@
             margin-top: 10px;
         }
 
+        .shop-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+
+        .shop-tab-btn {
+            padding: 6px 14px;
+            font-size: 12px;
+            border-radius: 15px;
+            border: 1px solid #4af;
+            background: rgba(74, 175, 255, 0.1);
+            color: #4af;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .shop-tab-btn.active {
+            background: #4af;
+            color: #05050f;
+        }
+
         .shop-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;
             max-width: 320px;
             margin-bottom: 15px;
+            width: 100%;
         }
 
         .shop-item {
@@ -312,24 +335,22 @@
         </div>
 
         <button id="btnPlayNow" class="menu-btn btn-primary">JOACĂ ACUM</button>
-        <button id="btnOpenSkins" class="menu-btn" style="border-color:#ff3; color:#ff3;">🛒 MAGAZIN SKIN-URI</button>
-        <button id="btnOpenAuras" class="menu-btn" style="border-color:#f0f; color:#f0f;">✨ MAG. AURE & PARTICULE</button>
+        <button id="btnOpenShop" class="menu-btn" style="border-color:#ff3; color:#ff3;">🛒 MAGAZIN UNIFICAT</button>
     </div>
 
-    <!-- 2A. Magazin de Skin-uri -->
-    <div id="screen-skins" class="menu-overlay hidden">
-        <h1 style="color:#ff3; text-shadow: 0 0 20px #ff3;">MAGAZIN SKIN-URI</h1>
-        <p style="font-size:12px; color:#aaa; margin-bottom:15px;">Alege sau cumpără skin-ul tău preferat!</p>
-        <div class="shop-grid" id="skinsGrid"></div>
-        <button id="btnCloseSkins" class="menu-btn btn-primary">ÎNAPOI</button>
-    </div>
+    <!-- 2. Magazin cu Labels/Tab-uri Separated -->
+    <div id="screen-shop" class="menu-overlay hidden">
+        <h1 style="color:#ff3; text-shadow: 0 0 20px #ff3;">MAGAZIN</h1>
+        
+        <!-- Etichete / Tabs -->
+        <div class="shop-tabs">
+            <button class="shop-tab-btn active" data-tab="skins">Skin-uri</button>
+            <button class="shop-tab-btn" data-tab="auras">Aure Speciale</button>
+            <button class="shop-tab-btn" data-tab="particles">Particule Urmă</button>
+        </div>
 
-    <!-- 2B. Magazin de Aure & Particule -->
-    <div id="screen-auras" class="menu-overlay hidden">
-        <h1 style="color:#f0f; text-shadow: 0 0 20px #f0f;">MAGAZIN AURE & PARTICULE</h1>
-        <p style="font-size:12px; color:#aaa; margin-bottom:15px;">Personalizează efectele sau revino la original!</p>
-        <div class="shop-grid" id="aurasGrid"></div>
-        <button id="btnCloseAuras" class="menu-btn btn-primary">ÎNAPOI</button>
+        <div class="shop-grid" id="shopGrid"></div>
+        <button id="btnCloseShop" class="menu-btn btn-primary">ÎNAPOI</button>
     </div>
 
     <!-- 3. Ecran Opțiuni & Moduri de Joc -->
@@ -400,58 +421,68 @@
         let selectedSkill = 'ghost';
         let currentLang = 'ro';
         let playerSkin = '#4af';
-        let playerParticleType = 'original'; // 'original' lasă bulele/particulele clasice rotunde
-        let playerAuraColor = 'none'; // 'none' dezactivează aura specială (rămâne originalul)
+        let playerParticleType = 'original'; // original = trail-ul clasic din codul tău
+        let playerAuraColor = 'none'; 
+        let activeShopTab = 'skins';
         let audioVolume = 0.5;
 
         let neonCoins = parseInt(localStorage.getItem('nd_coins')) || 0;
         document.getElementById('coinsVal').innerText = neonCoins;
 
-        // Date separate pentru Skin-uri
-        let skinsData = [
-            { id: '#4af', name: 'Neon Blue', price: 0, owned: true },
-            { id: 'rainbow', name: 'Rainbow', price: 0, owned: true },
-            { id: 'pulse', name: 'Pulsator', price: 50, owned: localStorage.getItem('skin_pulse') === 'true' },
-            { id: 'matrix', name: 'Matrix', price: 100, owned: localStorage.getItem('skin_matrix') === 'true' }
-        ];
+        // Baza de date pentru magazin pe categorii/tab-uri
+        let shopData = {
+            skins: [
+                { id: '#4af', name: 'Neon Blue', price: 0, owned: true },
+                { id: 'rainbow', name: 'Rainbow', price: 0, owned: true },
+                { id: 'pulse', name: 'Pulsator', price: 50, owned: localStorage.getItem('skin_pulse') === 'true' },
+                { id: 'matrix', name: 'Matrix', price: 100, owned: localStorage.getItem('skin_matrix') === 'true' }
+            ],
+            auras: [
+                { id: 'none', name: 'Fără Aură', price: 0, owned: true },
+                { id: '#ff0055', name: 'Aura Roșie', price: 100, owned: localStorage.getItem('cust_aurared') === 'true' },
+                { id: '#00ffcc', name: 'Aura Cyan', price: 150, owned: localStorage.getItem('cust_auracyan') === 'true' }
+            ],
+            particles: [
+                { id: 'original', name: 'Implicit (Original)', price: 0, owned: true },
+                { id: 'stars', name: 'Steluțe ⭐', price: 50, owned: localStorage.getItem('cust_stars') === 'true' },
+                { id: 'hearts', name: 'Inimi ❤️', price: 80, owned: localStorage.getItem('cust_hearts') === 'true' }
+            ]
+        };
 
-        // Date separate pentru Aure și Particule (inclusiv opțiunile de dezactivare / original)
-        let aurasData = [
-            { id: 'original', type: 'particle', name: 'Implicit (Original)', price: 0, owned: true },
-            { id: 'stars', type: 'particle', name: 'Steluțe ⭐', price: 50, owned: localStorage.getItem('cust_stars') === 'true' },
-            { id: 'hearts', type: 'particle', name: 'Inimi ❤️', price: 80, owned: localStorage.getItem('cust_hearts') === 'true' },
-            { id: 'matrix_p', type: 'particle', name: 'Matrix 🟩', price: 100, owned: localStorage.getItem('cust_matrix_p') === 'true' },
-            { id: 'none', type: 'aura', name: 'Fără Aură (Original)', price: 0, owned: true },
-            { id: '#ff0055', type: 'aura', name: 'Aura Roșie', price: 100, owned: localStorage.getItem('cust_aurared') === 'true' },
-            { id: '#00ffcc', type: 'aura', name: 'Aura Cyan', price: 150, owned: localStorage.getItem('cust_auracyan') === 'true' }
-        ];
-
-        function renderSkinsShop() {
-            let grid = document.getElementById('skinsGrid');
+        function renderShop() {
+            let grid = document.getElementById('shopGrid');
             grid.innerHTML = '';
-            skinsData.forEach(item => {
-                let isSelected = (playerSkin === item.id);
+            let items = shopData[activeShopTab];
+
+            items.forEach(item => {
+                let isSelected = false;
+                if (activeShopTab === 'skins') isSelected = (playerSkin === item.id);
+                if (activeShopTab === 'auras') isSelected = (playerAuraColor === item.id);
+                if (activeShopTab === 'particles') isSelected = (playerParticleType === item.id);
+
                 let div = document.createElement('div');
                 div.className = `shop-item ${item.owned ? 'owned' : ''} ${isSelected ? 'selected' : ''}`;
                 div.innerHTML = `
-                    <h3 style="color:${item.id === 'rainbow' ? '#ff3' : '#4af'}">${item.name}</h3>
+                    <h3 style="color:${item.id.startsWith('#') ? item.id : '#ff3'}">${item.name}</h3>
                     <p>${item.owned ? (isSelected ? 'Echipat' : 'Deținut') : '🪙 ' + item.price}</p>
                 `;
                 div.addEventListener('click', () => {
                     if (item.owned) {
-                        playerSkin = item.id;
-                        player.color = playerSkin;
-                        renderSkinsShop();
+                        if (activeShopTab === 'skins') { playerSkin = item.id; player.color = playerSkin; }
+                        if (activeShopTab === 'auras') playerAuraColor = item.id;
+                        if (activeShopTab === 'particles') playerParticleType = item.id;
+                        renderShop();
                     } else {
                         if (neonCoins >= item.price) {
                             neonCoins -= item.price;
                             localStorage.setItem('nd_coins', neonCoins);
                             document.getElementById('coinsVal').innerText = neonCoins;
                             item.owned = true;
-                            localStorage.setItem('skin_' + item.id.replace('#',''), 'true');
-                            playerSkin = item.id;
-                            player.color = playerSkin;
-                            renderSkinsShop();
+                            localStorage.setItem((activeShopTab === 'skins' ? 'skin_' : 'cust_') + item.id.replace('#',''), 'true');
+                            if (activeShopTab === 'skins') { playerSkin = item.id; player.color = playerSkin; }
+                            if (activeShopTab === 'auras') playerAuraColor = item.id;
+                            if (activeShopTab === 'particles') playerParticleType = item.id;
+                            renderShop();
                             playSound(950, 'sine', 0.2);
                         } else {
                             playSound(200, 'sawtooth', 0.2);
@@ -462,42 +493,14 @@
             });
         }
 
-        function renderAurasShop() {
-            let grid = document.getElementById('aurasGrid');
-            grid.innerHTML = '';
-            aurasData.forEach(item => {
-                let isSelected = (item.type === 'particle' && playerParticleType === item.id) || 
-                                 (item.type === 'aura' && playerAuraColor === item.id);
-                let div = document.createElement('div');
-                div.className = `shop-item ${item.owned ? 'owned' : ''} ${isSelected ? 'selected' : ''}`;
-                div.innerHTML = `
-                    <h3 style="color:${item.type === 'aura' && item.id !== 'none' ? item.id : '#f0f'}">${item.name}</h3>
-                    <p>${item.owned ? (isSelected ? 'Echipat' : 'Deținut') : '🪙 ' + item.price}</p>
-                `;
-                div.addEventListener('click', () => {
-                    if (item.owned) {
-                        if (item.type === 'particle') playerParticleType = item.id;
-                        if (item.type === 'aura') playerAuraColor = item.id;
-                        renderAurasShop();
-                    } else {
-                        if (neonCoins >= item.price) {
-                            neonCoins -= item.price;
-                            localStorage.setItem('nd_coins', neonCoins);
-                            document.getElementById('coinsVal').innerText = neonCoins;
-                            item.owned = true;
-                            localStorage.setItem('cust_' + item.id.replace('#',''), 'true');
-                            if (item.type === 'particle') playerParticleType = item.id;
-                            if (item.type === 'aura') playerAuraColor = item.id;
-                            renderAurasShop();
-                            playSound(950, 'sine', 0.2);
-                        } else {
-                            playSound(200, 'sawtooth', 0.2);
-                        }
-                    }
-                });
-                grid.appendChild(div);
+        document.querySelectorAll('.shop-tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.shop-tab-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                activeShopTab = e.target.getAttribute('data-tab');
+                renderShop();
             });
-        }
+        });
 
         let records = {
             classic: localStorage.getItem('nd_rec_classic') || 0,
@@ -543,13 +546,7 @@
         let player = {
             x: MAP_SIZE / 2, y: MAP_SIZE / 2,
             radius: 15, color: '#4af', baseSpeed: 4.5, speed: 4.5,
-            vx: 0, vy: 0, angle: 0
-        };
-
-        let player2 = {
-            x: MAP_SIZE / 2 + 100, y: MAP_SIZE / 2 + 100,
-            radius: 15, color: '#3f9', baseSpeed: 4.5, speed: 4.5,
-            vx: 0, vy: 0
+            vx: 0, vy: 0, angle: 0, trail: []
         };
 
         let bots = [];
@@ -558,9 +555,7 @@
         let food = [];
         let powerups = [];
         let traps = [];
-        let blackHoles = [];
         let labirinthWalls = [];
-        let particles = [];
 
         let menuBalls = [];
         for (let i = 0; i < 25; i++) {
@@ -579,8 +574,7 @@
                 mainTitle: "NEON DEVORATOR",
                 langLabel: "LIMBĂ / LANGUAGE",
                 btnPlayNow: "JOACĂ ACUM",
-                btnOpenSkins: "🛒 MAGAZIN SKIN-URI",
-                btnOpenAuras: "✨ MAG. AURE & PARTICULE",
+                btnOpenShop: "🛒 MAGAZIN UNIFICAT",
                 optTitle: "CONFIGURARE",
                 modeLabel: "MOD DE JOC",
                 skillChoiceLabel: "ABILITATE SPECIALĂ",
@@ -599,8 +593,7 @@
                 mainTitle: "NEON DEVORATOR",
                 langLabel: "LANGUAGE",
                 btnPlayNow: "PLAY NOW",
-                btnOpenSkins: "🛒 SKINS SHOP",
-                btnOpenAuras: "✨ AURAS & PARTICLES",
+                btnOpenShop: "🛒 SHOP",
                 optTitle: "SETTINGS",
                 modeLabel: "GAME MODE",
                 skillChoiceLabel: "SPECIAL SKILL",
@@ -619,8 +612,7 @@
                 mainTitle: "NEON DEVORATOR",
                 langLabel: "IDIOMA",
                 btnPlayNow: "JUGAR AHORA",
-                btnOpenSkins: "🛒 TIENDA DE SKINS",
-                btnOpenAuras: "✨ AURA Y PARTÍCULAS",
+                btnOpenShop: "🛒 TIENDA",
                 optTitle: "AJUSTES",
                 modeLabel: "MODO DE JUEGO",
                 skillChoiceLabel: "HABILIDAD ESPECIAL",
@@ -642,8 +634,7 @@
             document.getElementById('mainTitle').innerText = t.mainTitle;
             document.getElementById('langLabel').innerText = t.langLabel;
             document.getElementById('btnPlayNow').innerText = t.btnPlayNow;
-            document.getElementById('btnOpenSkins').innerText = t.btnOpenSkins;
-            document.getElementById('btnOpenAuras').innerText = t.btnOpenAuras;
+            document.getElementById('btnOpenShop').innerText = t.btnOpenShop;
             document.getElementById('optTitle').innerText = t.optTitle;
             document.getElementById('modeLabel').innerText = t.modeLabel;
             document.getElementById('skillChoiceLabel').innerText = t.skillChoiceLabel;
@@ -681,34 +672,8 @@
         window.addEventListener('resize', resize);
         resize();
 
-        function addCustomParticles(x, y) {
-            if (playerParticleType === 'original') {
-                // Particule originale (cercuri mici luminoase)
-                particles.push({
-                    x: x, y: y,
-                    vx: (Math.random() - 0.5) * 4,
-                    vy: (Math.random() - 0.5) * 4,
-                    radius: Math.random() * 3 + 1,
-                    color: player.color, life: 25, isText: false
-                });
-                return;
-            }
-
-            let symbol = '⭐';
-            let color = '#ff3';
-            if (playerParticleType === 'hearts') { symbol = '❤️'; color = '#f36'; }
-            if (playerParticleType === 'matrix_p') { symbol = '1'; color = '#3f9'; }
-
-            particles.push({
-                x: x, y: y,
-                vx: (Math.random() - 0.5) * 3,
-                vy: (Math.random() - 0.5) * 3,
-                symbol: symbol, color: color, life: 25, isText: true
-            });
-        }
-
         function initEntities() {
-            bots = []; pacmanGuards = []; bossBot = null; food = []; powerups = []; traps = []; blackHoles = []; labirinthWalls = []; particles = [];
+            bots = []; pacmanGuards = []; bossBot = null; food = []; powerups = []; traps = []; labirinthWalls = []; player.trail = [];
             MAP_SIZE = selectedMode === 'survival' ? 2500 : (selectedMode === 'pacman' ? 2000 : 3000);
 
             let speedMult = selectedDifficulty === 'easy' ? 1.5 : (selectedDifficulty === 'mid' ? 2.5 : 4.0);
@@ -764,43 +729,21 @@
                         radius: 4, color: Math.random() > 0.5 ? '#3f9' : '#fc3'
                     });
                 }
-                for (let i = 0; i < 15; i++) {
-                    powerups.push({
-                        x: Math.random() * (MAP_SIZE - 100) + 50,
-                        y: Math.random() * (MAP_SIZE - 100) + 50,
-                        radius: 9, type: 'magenta', color: '#f3f'
-                    });
-                }
             }
         }
 
         let joystick = { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, touchId: null };
-        let joystick2 = { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, touchId: null };
 
         window.addEventListener('pointerdown', (e) => {
             if (!gameRunning || isPaused) return;
             if (audioCtx.state === 'suspended') audioCtx.resume();
             if (e.clientX > window.innerWidth - 160 && e.clientY > window.innerHeight - 240) return;
 
-            if (selectedMode === 'pvp') {
-                if (e.clientX < window.innerWidth / 2 && !joystick.active) {
-                    joystick.active = true;
-                    joystick.startX = e.clientX; joystick.startY = e.clientY;
-                    joystick.currentX = e.clientX; joystick.currentY = e.clientY;
-                    joystick.touchId = e.pointerId;
-                } else if (e.clientX >= window.innerWidth / 2 && !joystick2.active) {
-                    joystick2.active = true;
-                    joystick2.startX = e.clientX; joystick2.startY = e.clientY;
-                    joystick2.currentX = e.clientX; joystick2.currentY = e.clientY;
-                    joystick2.touchId = e.pointerId;
-                }
-            } else {
-                if (!joystick.active) {
-                    joystick.active = true;
-                    joystick.startX = e.clientX; joystick.startY = e.clientY;
-                    joystick.currentX = e.clientX; joystick.currentY = e.clientY;
-                    joystick.touchId = e.pointerId;
-                }
+            if (!joystick.active) {
+                joystick.active = true;
+                joystick.startX = e.clientX; joystick.startY = e.clientY;
+                joystick.currentX = e.clientX; joystick.currentY = e.clientY;
+                joystick.touchId = e.pointerId;
             }
         });
 
@@ -809,17 +752,11 @@
             if (e.pointerId === joystick.touchId) {
                 joystick.currentX = e.clientX; joystick.currentY = e.clientY;
             }
-            if (e.pointerId === joystick2.touchId) {
-                joystick2.currentX = e.clientX; joystick2.currentY = e.clientY;
-            }
         });
 
         const resetJoystickPointer = (e) => {
             if (e.pointerId === joystick.touchId) {
                 joystick.active = false; joystick.touchId = null; player.vx = 0; player.vy = 0;
-            }
-            if (e.pointerId === joystick2.touchId) {
-                joystick2.active = false; joystick2.touchId = null; player2.vx = 0; player2.vy = 0;
             }
         };
         window.addEventListener('pointerup', resetJoystickPointer);
@@ -896,26 +833,14 @@
             document.getElementById('screen-options').classList.remove('hidden');
         });
 
-        // Butoane separate pentru magazine
-        document.getElementById('btnOpenSkins').addEventListener('click', () => {
-            renderSkinsShop();
+        document.getElementById('btnOpenShop').addEventListener('click', () => {
+            renderShop();
             document.getElementById('screen-main').classList.add('hidden');
-            document.getElementById('screen-skins').classList.remove('hidden');
+            document.getElementById('screen-shop').classList.remove('hidden');
         });
 
-        document.getElementById('btnCloseSkins').addEventListener('click', () => {
-            document.getElementById('screen-skins').classList.add('hidden');
-            document.getElementById('screen-main').classList.remove('hidden');
-        });
-
-        document.getElementById('btnOpenAuras').addEventListener('click', () => {
-            renderAurasShop();
-            document.getElementById('screen-main').classList.add('hidden');
-            document.getElementById('screen-auras').classList.remove('hidden');
-        });
-
-        document.getElementById('btnCloseAuras').addEventListener('click', () => {
-            document.getElementById('screen-auras').classList.add('hidden');
+        document.getElementById('btnCloseShop').addEventListener('click', () => {
+            document.getElementById('screen-shop').classList.add('hidden');
             document.getElementById('screen-main').classList.remove('hidden');
         });
 
@@ -984,7 +909,6 @@
             updateRecordDisplay();
         }
 
-        // Desenare ochi clasici cu privire direcțională
         function drawEyes(x, y, radius, angle) {
             let eyeOffset = radius * 0.35;
             let eyeRadius = Math.max(3, radius * 0.2);
@@ -1081,10 +1005,32 @@
                 player.y = Math.max(player.radius, Math.min(MAP_SIZE - player.radius, nextY));
             }
 
-            if (Math.random() < 0.4) addCustomParticles(player.x, player.y);
+            // Urma clasică (Trail din codul tău original)
+            player.trail.push({ x: player.x, y: player.y, radius: player.radius, alpha: 0.6 });
+            if (player.trail.length > 8) player.trail.shift();
 
             ctx.fillStyle = '#05050f';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Desenează Urma / Trail-ul din spate (Original)
+            player.trail.forEach(t => {
+                t.alpha -= 0.05;
+                if (t.alpha > 0) {
+                    let tScreenX = t.x - player.x + canvas.width / 2;
+                    let tScreenY = t.y - player.y + canvas.height / 2;
+                    
+                    if (playerParticleType === 'original') {
+                        ctx.beginPath();
+                        ctx.arc(tScreenX, tScreenY, t.radius * 0.8, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(74, 175, 255, ${t.alpha * 0.4})`;
+                        ctx.fill();
+                    } else {
+                        ctx.font = '14px sans-serif';
+                        ctx.fillStyle = playerParticleType === 'stars' ? '#ff3' : '#f36';
+                        ctx.fillText(playerParticleType === 'stars' ? '⭐' : '❤️', tScreenX, tScreenY);
+                    }
+                }
+            });
 
             // Labirint Pac-Man
             if (selectedMode === 'pacman') {
@@ -1189,26 +1135,7 @@
                 });
             }
 
-            // Particule lăsate în urmă (originale sau custom)
-            particles.forEach((p, index) => {
-                p.life--;
-                if (p.life <= 0) particles.splice(index, 1);
-                let pScreenX = p.x - player.x + canvas.width / 2;
-                let pScreenY = p.y - player.y + canvas.height / 2;
-                
-                if (p.isText) {
-                    ctx.font = '14px sans-serif';
-                    ctx.fillStyle = p.color;
-                    ctx.fillText(p.symbol, pScreenX, pScreenY);
-                } else {
-                    ctx.beginPath();
-                    ctx.arc(pScreenX, pScreenY, p.radius, 0, Math.PI * 2);
-                    ctx.fillStyle = p.color;
-                    ctx.fill();
-                }
-            });
-
-            // Aură personalizată (doar dacă este selectată și diferită de 'none')
+            // Aură personalizată
             if (activeSkillTimer > 0 && playerAuraColor !== 'none') {
                 ctx.beginPath();
                 ctx.arc(canvas.width / 2, canvas.height / 2, player.radius + 12, 0, Math.PI * 2);
