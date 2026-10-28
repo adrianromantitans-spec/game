@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Devorator - Ultimate Edition & Pause</title>
+    <title>Neon Devorator - Ultimate Edition & Fixed Joystick</title>
     <style>
         * {
             box-sizing: border-box;
@@ -644,7 +644,6 @@
                 };
             } else if (selectedMode !== 'pvp') {
                 for (let i = 0; i < (selectedMode === 'survival' ? 45 : 30); i++) {
-                    // Generăm boți cu dimensiuni variate: unii mici, alții medii sau chiar mai mari
                     let bRadius = Math.random() > 0.3 ? (Math.random() * 25 + 10) : (Math.random() * 60 + 20);
                     bots.push({
                         x: Math.random() * (MAP_SIZE - 200) + 100,
@@ -702,11 +701,14 @@
         let joystick = { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, touchId: null };
         let joystick2 = { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, touchId: null };
 
+        // Optimizat pentru a nu se bloca pe Android
         window.addEventListener('touchstart', (e) => {
             if (!gameRunning || isPaused) return;
             if (audioCtx.state === 'suspended') audioCtx.resume();
+            
             for (let touch of e.changedTouches) {
-                if (touch.clientX > window.innerWidth - 160 && touch.clientY > window.innerHeight - 240) continue;
+                // Ignorăm atingerile directe pe zona butoanelor din dreapta jos
+                if (touch.clientX > window.innerWidth - 180 && touch.clientY > window.innerHeight - 260) continue;
 
                 if (selectedMode === 'pvp') {
                     if (touch.clientX < window.innerWidth / 2 && !joystick.active) {
@@ -729,7 +731,7 @@
                     }
                 }
             }
-        });
+        }, { passive: true });
 
         window.addEventListener('touchmove', (e) => {
             if (!gameRunning || isPaused) return;
@@ -741,9 +743,9 @@
                     joystick2.currentX = touch.clientX; joystick2.currentY = touch.clientY;
                 }
             }
-        });
+        }, { passive: true });
 
-        const resetJoystick = (e) => {
+        const releaseJoystick = (e) => {
             for (let touch of e.changedTouches) {
                 if (touch.identifier === joystick.touchId) {
                     joystick.active = false; joystick.touchId = null; player.vx = 0; player.vy = 0;
@@ -753,8 +755,9 @@
                 }
             }
         };
-        window.addEventListener('touchend', resetJoystick);
-        window.addEventListener('touchcancel', resetJoystick);
+
+        window.addEventListener('touchend', releaseJoystick, { passive: true });
+        window.addEventListener('touchcancel', releaseJoystick, { passive: true });
 
         let keys = {};
         window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
@@ -798,7 +801,6 @@
             }
         });
 
-        // Buton Pauză în joc
         document.getElementById('pauseBtn').addEventListener('touchstart', (e) => {
             e.preventDefault();
             if (gameRunning) {
@@ -1107,7 +1109,6 @@
                 for (let i = bots.length - 1; i >= 0; i--) {
                     let b = bots[i];
 
-                    // BOȚII CRESC ÎN TIMP: dacă un bot mănâncă hrană sau crește natural, devine mai mare în timp
                     if (Math.random() < 0.05 && b.radius < 120) {
                         b.radius += 0.15;
                     }
@@ -1167,7 +1168,6 @@
 
         function spawnSingleBot() {
             let speedMult = selectedDifficulty === 'easy' ? 1.5 : (selectedDifficulty === 'mid' ? 2.5 : 4.0);
-            // Generăm și boți mai mari sau mai mici în mod dinamic
             let bRadius = Math.random() > 0.4 ? (Math.random() * 25 + 10) : (Math.random() * 55 + 20);
             bots.push({
                 x: Math.random() * (MAP_SIZE - 100) + 50,
