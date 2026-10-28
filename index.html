@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Devorator - Ultimate Edition</title>
+    <title>Neon Devorator - Stealth Spawn Edition</title>
     <style>
         * {
             box-sizing: border-box;
@@ -272,18 +272,6 @@
             accent-color: #4af;
         }
 
-        .achievements-box {
-            font-size: 12px;
-            color: #3f9;
-            background: rgba(0,255,150,0.1);
-            border: 1px solid #3f9;
-            padding: 8px 12px;
-            border-radius: 10px;
-            margin-top: 10px;
-            max-width: 280px;
-            text-align: center;
-        }
-
         .hidden {
             display: none !important;
         }
@@ -414,7 +402,7 @@
         let activeShopTab = 'skins';
         let audioVolume = 0.5;
 
-        // Timer de invincibilitate la start (3 secunde = 180 frame-uri la 60fps)
+        // Timer invizibilitate spawn (180 frame-uri = 3 secunde la 60fps)
         let spawnInvincibilityTimer = 0;
 
         let neonCoins = parseInt(localStorage.getItem('nd_coins')) || 0;
@@ -694,7 +682,7 @@
             bots = []; food = []; pacmanGuards = []; labirinthWalls = []; player.trail = [];
             MAP_SIZE = selectedMode === 'survival' ? 2500 : (selectedMode === 'pacman' ? 2000 : 3000);
 
-            spawnInvincibilityTimer = 180; // 3 secunde (la 60fps) de invincibilitate / invizibilitate față de boți
+            spawnInvincibilityTimer = 180; // Activare invizibilitate 3 secunde la fiecare start
 
             if (selectedMode === 'pacman') {
                 for (let i = 0; i < 18; i++) {
@@ -975,7 +963,7 @@
                 let moveSpeed = Math.max(1.3, (32 / b.radius) * speedMult);
                 let distToPlayer = Math.hypot(player.x - b.x, player.y - b.y);
 
-                // Dacă jucătorul e în primele 3 secunde (invizibil), boții îl ignoră complet și caută doar mâncare!
+                // DACA JUCĂTORUL E INVIZIBIL (spawnInvincibilityTimer > 0), BOTII IL IGNORA COMPLET
                 if (spawnInvincibilityTimer === 0 && b.radius > player.radius * 1.05 && distToPlayer < 450) {
                     b.angle = Math.atan2(player.y - b.y, player.x - b.x); 
                 } else if (spawnInvincibilityTimer === 0 && player.radius > b.radius * 1.05 && distToPlayer < 300) {
@@ -1014,7 +1002,7 @@
                     }
                 }
 
-                // Coliziunea cu jucătorul are loc doar dacă timerul de invincibilitate a expirat
+                // Interacțiunea cu botul se aplică doar când timerul de invizibilitate a expirat!
                 if (spawnInvincibilityTimer === 0 && distToPlayer < player.radius + b.radius) {
                     if (player.radius > b.radius * 1.05) {
                         player.radius += b.radius * 0.35;
@@ -1165,7 +1153,6 @@
 
                     drawEyes(gScreenX, gScreenY, g.radius, angle);
 
-                    // Gardienii din Pacman ignoră și ei jucătorul în primele 3 secunde
                     if (spawnInvincibilityTimer === 0 && Math.hypot(player.x - g.x, player.y - g.y) < player.radius + g.radius) {
                         gameRunning = false;
                         document.getElementById('gameOverTitle').innerText = translations[currentLang].loseTitle;
@@ -1175,13 +1162,18 @@
                 });
             }
 
-            // Dacă este activă invincibilitatea de la spawn, afișăm o aură de protecție albastră care pulsează
+            // Efect vizual de INVIZIBILITATE (Pulsare + Semitransparenta)
+            ctx.save();
             if (spawnInvincibilityTimer > 0) {
+                ctx.globalAlpha = 0.4; // Face jucatorul semitransparent
+
+                // Aura Cyan de scut / invizibilitate care pulseaza
+                let pulseRadius = player.radius + 8 + Math.sin(Date.now() / 100) * 4;
                 ctx.beginPath();
-                ctx.arc(canvas.width / 2, canvas.height / 2, player.radius + 10, 0, Math.PI * 2);
+                ctx.arc(canvas.width / 2, canvas.height / 2, pulseRadius, 0, Math.PI * 2);
                 ctx.strokeStyle = '#00ffff';
-                ctx.lineWidth = 4;
-                ctx.shadowBlur = 20;
+                ctx.lineWidth = 3;
+                ctx.shadowBlur = 15;
                 ctx.shadowColor = '#00ffff';
                 ctx.stroke();
                 ctx.shadowBlur = 0;
@@ -1198,7 +1190,7 @@
                 ctx.shadowBlur = 0;
             }
 
-            // Jucător
+            // Randare Jucator
             ctx.beginPath();
             ctx.arc(canvas.width / 2, canvas.height / 2, player.radius, 0, Math.PI * 2);
             ctx.fillStyle = player.color;
@@ -1208,6 +1200,7 @@
             ctx.shadowBlur = 0;
 
             drawEyes(canvas.width / 2, canvas.height / 2, player.radius, player.angle || 0);
+            ctx.restore();
 
             // Minimap
             mCtx.fillStyle = '#05050f';
