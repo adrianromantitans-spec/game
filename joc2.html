@@ -1,0 +1,2177 @@
+
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#02040b">
+<title>NEON DEVORATOR</title>
+
+<style>
+:root{
+  --cyan:#49caff;
+  --dark:#02040b;
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+  --safe-left:env(safe-area-inset-left,0px);
+  --safe-right:env(safe-area-inset-right,0px);
+}
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:var(--dark);
+  color:white;
+  font-family:Arial,sans-serif;
+  overscroll-behavior:none;
+}
+body{
+  position:fixed;
+  inset:0;
+}
+canvas{
+  display:block;
+  width:100%;
+  height:100%;
+  touch-action:none;
+}
+#game{
+  position:fixed;
+  inset:0;
+  z-index:0;
+}
+.hidden{display:none!important}
+
+button{
+  cursor:pointer;
+  border:2px solid var(--cyan);
+  border-radius:20px;
+  background:#071b30;
+  color:#66d9ff;
+  font-weight:bold;
+  padding:11px 18px;
+  min-width:130px;
+  touch-action:manipulation;
+}
+button.selected,
+button:active{
+  background:var(--cyan);
+  color:#02111e;
+}
+.primary{
+  background:var(--cyan);
+  color:#02111e;
+}
+.overlay{
+  position:fixed;
+  inset:0;
+  z-index:30;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding:20px;
+  overflow-y:auto;
+  text-align:center;
+  background:rgba(2,5,16,.94);
+  touch-action:pan-y;
+}
+.overlay h1{
+  margin:0 0 10px;
+  font-size:clamp(30px,7vw,54px);
+  color:var(--cyan);
+  text-shadow:0 0 22px #008dff;
+}
+.overlay p{
+  color:#b7c7d6;
+  max-width:420px;
+  line-height:1.5;
+}
+.row{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:7px;
+}
+.row button{
+  min-width:68px;
+  padding:9px 11px;
+}
+label{
+  color:#aac4d7;
+  font-size:13px;
+}
+#shopItems{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  width:min(350px,90vw);
+}
+.shopItem{
+  background:#0a1425;
+  border:2px solid #3b5366;
+  border-radius:12px;
+  padding:14px 8px;
+  cursor:pointer;
+}
+.shopItem.owned{border-color:#36d78e}
+.shopItem.selected{border-color:#ffe34d}
+.shopItem small{
+  display:block;
+  margin-top:6px;
+  color:#a8b5c4;
+}
+
+#hud{
+  position:fixed;
+  top:12px;
+  left:12px;
+  z-index:5;
+  pointer-events:none;
+  font-size:14px;
+  line-height:1.8;
+  text-shadow:0 0 8px black;
+}
+#hud strong{color:var(--cyan)}
+#coinsText{color:#ffdb38}
+#minimap{
+  position:fixed;
+  top:12px;
+  right:12px;
+  width:90px;
+  height:90px;
+  z-index:5;
+  border:2px solid var(--cyan);
+  border-radius:12px;
+  background:#030a15;
+}
+#notice{
+  position:fixed;
+  top:17%;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:40;
+  color:#55ffaa;
+  font-weight:bold;
+  text-align:center;
+  pointer-events:none;
+  text-shadow:0 0 15px #00ff99;
+}
+
+.control{
+  position:fixed;
+  z-index:12;
+  width:58px;
+  height:58px;
+  min-width:0;
+  padding:0;
+  border-radius:50%;
+  background:#071a2cdd;
+  backdrop-filter:blur(4px);
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+}
+#pauseBtn{
+  top:115px;
+  right:12px;
+  width:46px;
+  height:46px;
+  color:#ffdb38;
+  border-color:#ffdb38;
+}
+#dashBtn{
+  right:calc(15px + var(--safe-right));
+  bottom:calc(18px + var(--safe-bottom));
+}
+#skillBtn{
+  right:calc(15px + var(--safe-right));
+  bottom:calc(89px + var(--safe-bottom));
+  color:#ffe24b;
+  border-color:#ffe24b;
+}
+#splitBtn{
+  right:calc(15px + var(--safe-right));
+  bottom:calc(160px + var(--safe-bottom));
+  color:#42ff99;
+  border-color:#42ff99;
+}
+#freezeBtn{
+  right:calc(86px + var(--safe-right));
+  bottom:calc(18px + var(--safe-bottom));
+  color:#55ffff;
+  border-color:#55ffff;
+}
+
+/* JOYSTICK FIX PENTRU ANDROID */
+#joy{
+  position:fixed;
+  z-index:15;
+  left:calc(18px + var(--safe-left));
+  bottom:calc(25px + var(--safe-bottom));
+  width:132px;
+  height:132px;
+  border:2px solid #49caff88;
+  border-radius:50%;
+  background:#49caff18;
+  box-shadow:0 0 24px #00aaff22;
+  touch-action:none!important;
+  user-select:none;
+  -webkit-user-select:none;
+  -webkit-touch-callout:none;
+  overscroll-behavior:none;
+  pointer-events:auto;
+}
+#joy::after{
+  content:"";
+  position:absolute;
+  inset:12px;
+  border:1px dashed #49caff44;
+  border-radius:50%;
+  pointer-events:none;
+}
+#knob{
+  position:absolute;
+  width:54px;
+  height:54px;
+  left:50%;
+  top:50%;
+  margin-left:-27px;
+  margin-top:-27px;
+  border-radius:50%;
+  background:radial-gradient(circle at 30% 25%,#b4f3ff,#168cbd);
+  box-shadow:0 0 22px #49caff88;
+  pointer-events:none;
+  will-change:transform;
+  transform:translate3d(0,0,0);
+}
+
+@media(max-height:550px){
+  #joy{
+    width:108px;
+    height:108px;
+    bottom:calc(12px + var(--safe-bottom));
+  }
+  #dashBtn{bottom:calc(12px + var(--safe-bottom))}
+  #skillBtn{bottom:calc(77px + var(--safe-bottom))}
+  #splitBtn{bottom:calc(142px + var(--safe-bottom))}
+  #freezeBtn{bottom:calc(12px + var(--safe-bottom))}
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="game"></canvas>
+<canvas id="minimap" width="90" height="90"></canvas>
+
+<div id="hud">
+  <strong>NEON DEVORATOR</strong><br>
+  <span id="sizeLabel">Mărime</span>:
+  <span id="score">15</span> / 200<br>
+  <span id="coinsText">
+    🪙 <span id="coinsLabel">Monede</span>:
+    <span id="coins">0</span>
+  </span><br>
+  <span id="recordLabel">Record</span>:
+  <span id="record">0</span><br>
+  <span id="modeHud">CLASSIC</span>
+</div>
+
+<div id="notice"></div>
+
+<button class="control" id="pauseBtn">Ⅱ</button>
+<button class="control" id="dashBtn">DASH</button>
+<button class="control" id="skillBtn">⚡</button>
+<button class="control" id="splitBtn">✂</button>
+<button class="control" id="freezeBtn">❄</button>
+
+<div id="joy">
+  <div id="knob"></div>
+</div>
+
+<!-- MENIU PRINCIPAL -->
+<div id="main" class="overlay">
+  <h1>NEON DEVORATOR</h1>
+  <p id="mainDescription">
+    Crește, devorează adversarii și domină arena!
+  </p>
+
+  <div class="row">
+    <button class="lang selected" data-lang="ro">RO</button>
+    <button class="lang" data-lang="en">EN</button>
+    <button class="lang" data-lang="es">ES</button>
+  </div>
+
+  <button class="primary" id="playBtn">JOACĂ ACUM</button>
+  <button id="shopBtn">🛒 MAGAZIN</button>
+</div>
+
+<!-- CONFIGURARE -->
+<div id="options" class="overlay hidden">
+  <h1 id="optionsTitle">CONFIGURARE</h1>
+
+  <label id="modeLabel">MOD DE JOC</label>
+  <div class="row">
+    <button class="mode selected" data-mode="classic">Classic</button>
+    <button class="mode" data-mode="survival">Survival</button>
+    <button class="mode" data-mode="boss">Boss</button>
+    <button class="mode" data-mode="pacman">Pac-Cyber</button>
+  </div>
+
+  <label id="abilityLabel">ABILITATE SPECIALĂ</label>
+  <div class="row">
+    <button class="skill selected" data-skill="ghost">Ghost</button>
+    <button class="skill" data-skill="blackhole">Puls G.</button>
+    <button class="skill" data-skill="giant">Gigant</button>
+  </div>
+
+  <label id="difficultyLabel">DIFICULTATE</label>
+  <div class="row">
+    <button class="difficulty" data-diff="easy">EASY</button>
+    <button class="difficulty selected" data-diff="mid">MID</button>
+    <button class="difficulty" data-diff="hard">HARD</button>
+  </div>
+
+  <label id="volumeLabel">Volum: 50%</label>
+  <input id="volume" type="range" min="0" max="100" value="50">
+
+  <button class="primary" id="startBtn">START JOC</button>
+  <button id="backBtn">ÎNAPOI</button>
+</div>
+
+<!-- MAGAZIN -->
+<div id="shop" class="overlay hidden">
+  <h1 id="shopTitle">MAGAZIN</h1>
+
+  <div>🪙 <span id="shopCoins">0</span></div>
+
+  <div class="row">
+    <button id="skinsTab" class="selected">Skin-uri</button>
+    <button id="aurasTab">Aure Speciale</button>
+  </div>
+
+  <div id="shopItems"></div>
+  <button id="shopBack">ÎNAPOI</button>
+</div>
+
+<!-- PAUZA -->
+<div id="pause" class="overlay hidden">
+  <h1 id="pauseTitle">PAUZĂ</h1>
+  <button class="primary" id="resumeBtn">CONTINUĂ</button>
+  <button id="quitBtn">MENIU PRINCIPAL</button>
+</div>
+
+<!-- FINAL -->
+<div id="gameover" class="overlay hidden">
+  <h1 id="endTitle">GAME OVER</h1>
+  <p id="endText">Ai fost devorat!</p>
+  <button class="primary" id="retryBtn">REÎNCEARCĂ</button>
+  <button id="endMenuBtn">MENIU PRINCIPAL</button>
+</div>
+
+<script>
+"use strict";
+
+// =====================================
+// ELEMENTE
+// =====================================
+
+const $=id=>document.getElementById(id);
+const canvas=$("game");
+const ctx=canvas.getContext("2d");
+const minimap=$("minimap");
+const mctx=minimap.getContext("2d");
+
+function resize(){
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight;
+  resetJoystick();
+}
+
+window.addEventListener("resize",resize);
+window.addEventListener("orientationchange",resetJoystick);
+
+function showScreen(id){
+  ["main","options","shop","pause","gameover"].forEach(name=>{
+    $(name).classList.add("hidden");
+  });
+
+  if(id)$(id).classList.remove("hidden");
+
+  const playing=id===null;
+
+  [
+    "hud","minimap","pauseBtn","dashBtn",
+    "skillBtn","splitBtn","freezeBtn","joy"
+  ].forEach(name=>{
+    $(name).classList.toggle("hidden",!playing);
+  });
+}
+
+// =====================================
+// SALVARE
+// =====================================
+
+function getSaved(key,fallback){
+  try{
+    const value=localStorage.getItem(key);
+    return value===null?fallback:value;
+  }catch{
+    return fallback;
+  }
+}
+
+function save(key,value){
+  try{
+    localStorage.setItem(key,String(value));
+  }catch{}
+}
+
+let coins=Number(getSaved("nd_coins",0))||0;
+let mode="classic";
+let difficulty="mid";
+let skill="ghost";
+let language=getSaved("nd_language","ro");
+let volume=.5;
+let skin=getSaved("nd_skin","#44aaff");
+let aura=getSaved("nd_aura","none");
+let shopTab="skins";
+
+if(!["ro","en","es"].includes(language)){
+  language="ro";
+}
+
+const skins=[
+  {id:"#44aaff",name:"Neon Blue",price:0},
+  {id:"rainbow",name:"Rainbow",price:0},
+  {id:"pulse",name:"Pulsator",price:50},
+  {id:"matrix",name:"Matrix",price:100}
+];
+
+const auras=[
+  {id:"none",name:"None",price:0},
+  {id:"#ff0055",name:"Red Aura",price:100},
+  {id:"#00ffcc",name:"Cyan Aura",price:150}
+];
+
+// =====================================
+// LIMBI
+// =====================================
+
+const translations={
+  ro:{
+    description:"Crește, devorează adversarii și domină arena!",
+    play:"JOACĂ ACUM",
+    shop:"🛒 MAGAZIN",
+    back:"ÎNAPOI",
+    shopTitle:"MAGAZIN",
+    skins:"Skin-uri",
+    auras:"Aure Speciale",
+    options:"CONFIGURARE",
+    gameMode:"MOD DE JOC",
+    ability:"ABILITATE SPECIALĂ",
+    difficulty:"DIFICULTATE",
+    start:"START JOC",
+    pause:"PAUZĂ",
+    resume:"CONTINUĂ",
+    quit:"MENIU PRINCIPAL",
+    retry:"REÎNCEARCĂ",
+    owned:"DEȚINUT",
+    equipped:"ECHIPAT",
+    size:"Mărime",
+    coins:"Monede",
+    record:"Record",
+    volume:"Volum",
+    gameOver:"GAME OVER",
+    win:"VICTORIE!",
+    lostText:"Ai fost devorat de un adversar mai mare!",
+    winText:"Ai dominat arena!",
+    bossNotice:"⚠ BOSS APĂRUT!",
+    notEnough:"Nu ai suficiente monede!",
+    none:"Fără aură",
+    redAura:"Aura Roșie",
+    cyanAura:"Aura Cyan",
+    easy:"UȘOR",
+    mid:"MEDIU",
+    hard:"GREU"
+  },
+  en:{
+    description:"Grow, devour smaller opponents and dominate the arena!",
+    play:"PLAY NOW",
+    shop:"🛒 SHOP",
+    back:"BACK",
+    shopTitle:"SHOP",
+    skins:"Skins",
+    auras:"Special Auras",
+    options:"SETTINGS",
+    gameMode:"GAME MODE",
+    ability:"SPECIAL ABILITY",
+    difficulty:"DIFFICULTY",
+    start:"START GAME",
+    pause:"PAUSED",
+    resume:"RESUME",
+    quit:"MAIN MENU",
+    retry:"RETRY",
+    owned:"OWNED",
+    equipped:"EQUIPPED",
+    size:"Size",
+    coins:"Coins",
+    record:"Record",
+    volume:"Volume",
+    gameOver:"GAME OVER",
+    win:"VICTORY!",
+    lostText:"You were eaten by a larger opponent!",
+    winText:"You dominated the arena!",
+    bossNotice:"⚠ BOSS APPEARED!",
+    notEnough:"Not enough coins!",
+    none:"No Aura",
+    redAura:"Red Aura",
+    cyanAura:"Cyan Aura",
+    easy:"EASY",
+    mid:"MEDIUM",
+    hard:"HARD"
+  },
+  es:{
+    description:"¡Crece, devora rivales más pequeños y domina la arena!",
+    play:"JUGAR AHORA",
+    shop:"🛒 TIENDA",
+    back:"ATRÁS",
+    shopTitle:"TIENDA",
+    skins:"Aspectos",
+    auras:"Auras Especiales",
+    options:"CONFIGURACIÓN",
+    gameMode:"MODO DE JUEGO",
+    ability:"HABILIDAD ESPECIAL",
+    difficulty:"DIFICULTAD",
+    start:"INICIAR JUEGO",
+    pause:"PAUSA",
+    resume:"CONTINUAR",
+    quit:"MENÚ PRINCIPAL",
+    retry:"REINTENTAR",
+    owned:"COMPRADO",
+    equipped:"EQUIPADO",
+    size:"Tamaño",
+    coins:"Monedas",
+    record:"Récord",
+    volume:"Volumen",
+    gameOver:"FIN DEL JUEGO",
+    win:"¡VICTORIA!",
+    lostText:"¡Un rival más grande te ha devorado!",
+    winText:"¡Has dominado la arena!",
+    bossNotice:"⚠ ¡JEFE APARECIÓ!",
+    notEnough:"¡No tienes suficientes monedas!",
+    none:"Sin aura",
+    redAura:"Aura Roja",
+    cyanAura:"Aura Cian",
+    easy:"FÁCIL",
+    mid:"MEDIO",
+    hard:"DIFÍCIL"
+  }
+};
+
+function t(){
+  return translations[language];
+}
+
+function translateGame(){
+  const tr=t();
+
+  const texts={
+    mainDescription:tr.description,
+    playBtn:tr.play,
+    shopBtn:tr.shop,
+    optionsTitle:tr.options,
+    modeLabel:tr.gameMode,
+    abilityLabel:tr.ability,
+    difficultyLabel:tr.difficulty,
+    startBtn:tr.start,
+    backBtn:tr.back,
+    shopTitle:tr.shopTitle,
+    skinsTab:tr.skins,
+    aurasTab:tr.auras,
+    shopBack:tr.back,
+    pauseTitle:tr.pause,
+    resumeBtn:tr.resume,
+    quitBtn:tr.quit,
+    retryBtn:tr.retry,
+    endMenuBtn:tr.quit,
+    sizeLabel:tr.size,
+    coinsLabel:tr.coins,
+    recordLabel:tr.record
+  };
+
+  for(const [id,value] of Object.entries(texts)){
+    $(id).textContent=value;
+  }
+
+  $("volumeLabel").textContent=
+    tr.volume+": "+Math.round(volume*100)+"%";
+
+  document.querySelector('[data-diff="easy"]')
+    .textContent=tr.easy;
+
+  document.querySelector('[data-diff="mid"]')
+    .textContent=tr.mid;
+
+  document.querySelector('[data-diff="hard"]')
+    .textContent=tr.hard;
+
+  document.querySelectorAll(".lang").forEach(button=>{
+    button.classList.toggle(
+      "selected",
+      button.dataset.lang===language
+    );
+  });
+
+  document.documentElement.lang=language;
+  renderShop();
+}
+
+document.querySelectorAll(".lang").forEach(button=>{
+  button.onclick=()=>{
+    language=button.dataset.lang;
+    save("nd_language",language);
+    translateGame();
+    sound(700,.08);
+  };
+});
+
+// =====================================
+// MAGAZIN
+// =====================================
+
+function owned(item){
+  return item.price===0||
+    getSaved("nd_owned_"+item.id,"false")==="true";
+}
+
+function refreshCoins(){
+  $("coins").textContent=coins;
+  $("shopCoins").textContent=coins;
+}
+
+function renderShop(){
+  refreshCoins();
+
+  $("skinsTab").classList.toggle(
+    "selected",shopTab==="skins"
+  );
+
+  $("aurasTab").classList.toggle(
+    "selected",shopTab==="auras"
+  );
+
+  const container=$("shopItems");
+  container.innerHTML="";
+
+  const items=shopTab==="skins"?skins:auras;
+
+  items.forEach(item=>{
+    const isOwned=owned(item);
+
+    const selected=shopTab==="skins"
+      ?skin===item.id
+      :aura===item.id;
+
+    const div=document.createElement("div");
+
+    div.className=
+      "shopItem "+
+      (isOwned?"owned ":"")+
+      (selected?"selected":"");
+
+    const title=document.createElement("strong");
+
+    let name=item.name;
+
+    if(item.id==="none")name=t().none;
+    if(item.id==="#ff0055")name=t().redAura;
+    if(item.id==="#00ffcc")name=t().cyanAura;
+
+    title.textContent=name;
+
+    const info=document.createElement("small");
+
+    info.textContent=selected
+      ?t().equipped
+      :isOwned
+      ?t().owned
+      :"🪙 "+item.price;
+
+    div.append(title,info);
+
+    div.onclick=()=>{
+      if(!owned(item)){
+        if(coins<item.price){
+          notify(t().notEnough);
+          sound(180,.2,"sawtooth");
+          return;
+        }
+
+        coins-=item.price;
+        save("nd_coins",coins);
+        save("nd_owned_"+item.id,true);
+        sound(950,.2);
+      }
+
+      if(shopTab==="skins"){
+        skin=item.id;
+        save("nd_skin",skin);
+      }else{
+        aura=item.id;
+        save("nd_aura",aura);
+      }
+
+      renderShop();
+    };
+
+    container.appendChild(div);
+  });
+}
+
+let noticeTimer;
+
+function notify(message){
+  $("notice").textContent=message;
+  clearTimeout(noticeTimer);
+
+  noticeTimer=setTimeout(()=>{
+    $("notice").textContent="";
+  },2200);
+}
+
+$("playBtn").onclick=()=>showScreen("options");
+$("backBtn").onclick=()=>showScreen("main");
+
+$("shopBtn").onclick=()=>{
+  renderShop();
+  showScreen("shop");
+};
+
+$("shopBack").onclick=()=>showScreen("main");
+
+$("skinsTab").onclick=()=>{
+  shopTab="skins";
+  renderShop();
+};
+
+$("aurasTab").onclick=()=>{
+  shopTab="auras";
+  renderShop();
+};
+
+document.querySelectorAll(".mode").forEach(button=>{
+  button.onclick=()=>{
+    document.querySelectorAll(".mode").forEach(b=>{
+      b.classList.remove("selected");
+    });
+
+    button.classList.add("selected");
+    mode=button.dataset.mode;
+    updateRecord();
+  };
+});
+
+document.querySelectorAll(".difficulty").forEach(button=>{
+  button.onclick=()=>{
+    document.querySelectorAll(".difficulty").forEach(b=>{
+      b.classList.remove("selected");
+    });
+
+    button.classList.add("selected");
+    difficulty=button.dataset.diff;
+  };
+});
+
+document.querySelectorAll(".skill").forEach(button=>{
+  button.onclick=()=>{
+    document.querySelectorAll(".skill").forEach(b=>{
+      b.classList.remove("selected");
+    });
+
+    button.classList.add("selected");
+    skill=button.dataset.skill;
+  };
+});
+
+$("volume").oninput=e=>{
+  volume=Number(e.target.value)/100;
+
+  $("volumeLabel").textContent=
+    t().volume+": "+Math.round(volume*100)+"%";
+};
+
+// =====================================
+// SUNET
+// =====================================
+
+let audioContext;
+
+function sound(freq=600,duration=.1,type="sine"){
+  if(volume<=0)return;
+
+  try{
+    audioContext||=new(
+      window.AudioContext||window.webkitAudioContext
+    )();
+
+    if(audioContext.state==="suspended"){
+      audioContext.resume();
+    }
+
+    const oscillator=audioContext.createOscillator();
+    const gain=audioContext.createGain();
+
+    oscillator.type=type;
+    oscillator.frequency.value=freq;
+
+    gain.gain.setValueAtTime(
+      Math.max(.0001,volume*.12),
+      audioContext.currentTime
+    );
+
+    gain.gain.exponentialRampToValueAtTime(
+      .001,
+      audioContext.currentTime+duration
+    );
+
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime+duration);
+  }catch{}
+}
+
+// =====================================
+// DATE JOC
+// =====================================
+
+let MAP_SIZE=3000;
+let running=false;
+let paused=false;
+
+let player;
+let bots=[];
+let food=[];
+let guards=[];
+let walls=[];
+let particles=[];
+
+let frame=0;
+let zoom=1;
+
+let spawnProtection=0;
+let dashCooldown=0;
+let skillCooldown=0;
+let skillTimer=0;
+let freezeTimer=0;
+let dashTimer=0;
+let bossSpawned=false;
+
+const random=(min,max)=>min+Math.random()*(max-min);
+
+const distance=(a,b)=>
+  Math.hypot(a.x-b.x,a.y-b.y);
+
+const clamp=(v,min,max)=>
+  Math.max(min,Math.min(max,v));
+
+function recordKey(){
+  return "nd_rec_"+mode;
+}
+
+function updateRecord(){
+  $("record").textContent=getSaved(recordKey(),0);
+}
+
+function updateScore(){
+  $("score").textContent=Math.floor(player.radius);
+
+  const previous=Number(getSaved(recordKey(),0));
+
+  if(player.radius>previous){
+    save(recordKey(),Math.floor(player.radius));
+    updateRecord();
+  }
+}
+
+function createFood(){
+  return{
+    x:random(30,MAP_SIZE-30),
+    y:random(30,MAP_SIZE-30),
+    radius:mode==="pacman"?6:4,
+    color:Math.random()>.5?"#36ff99":"#ffcc44"
+  };
+}
+
+function createBot(){
+  return{
+    x:random(100,MAP_SIZE-100),
+    y:random(100,MAP_SIZE-100),
+    radius:Math.random()>.4
+      ?random(10,25)
+      :random(18,53),
+    color:[
+      "#ff3355","#ffee33","#00ffff",
+      "#ff9900","#44ff99","#bb44ff"
+    ][Math.floor(Math.random()*6)],
+    angle:random(0,Math.PI*2)
+  };
+}
+
+function blocked(x,y,radius){
+  return walls.some(w=>
+    x+radius>w.x&&
+    x-radius<w.x+w.w&&
+    y+radius>w.y&&
+    y-radius<w.y+w.h
+  );
+}
+
+function spawnPlayer(){
+  let x=MAP_SIZE/2;
+  let y=MAP_SIZE/2;
+
+  if(mode==="pacman"&&blocked(x,y,20)){
+    for(let i=0;i<500;i++){
+      const nx=random(100,MAP_SIZE-100);
+      const ny=random(100,MAP_SIZE-100);
+
+      if(!blocked(nx,ny,35)){
+        x=nx;
+        y=ny;
+        break;
+      }
+    }
+  }
+
+  player={
+    x,y,
+    radius:15,
+    color:skin,
+    angle:0,
+    baseSpeed:4.5,
+    trail:[]
+  };
+}
+
+function startGame(){
+  MAP_SIZE=mode==="survival"
+    ?2500
+    :mode==="pacman"
+    ?2000
+    :3000;
+
+  bots=[];
+  food=[];
+  guards=[];
+  walls=[];
+  particles=[];
+
+  frame=0;
+  zoom=1;
+
+  spawnProtection=180;
+  dashCooldown=0;
+  skillCooldown=0;
+  skillTimer=0;
+  freezeTimer=0;
+  dashTimer=0;
+  bossSpawned=false;
+
+  if(mode==="pacman"){
+    for(let i=0;i<18;i++){
+      walls.push({
+        x:(i*350)%MAP_SIZE+100,
+        y:Math.floor(i/4)*400+150,
+        w:i%2===0?250:40,
+        h:i%2===0?40:250
+      });
+    }
+
+    for(let i=0;i<3;i++){
+      guards.push({
+        x:random(200,MAP_SIZE-200),
+        y:random(200,MAP_SIZE-200),
+        radius:20,
+        speed:1.5+i*.2,
+        angle:0
+      });
+    }
+  }else{
+    const amount=mode==="survival"?35:22;
+
+    for(let i=0;i<amount;i++){
+      bots.push(createBot());
+    }
+  }
+
+  for(let i=0;i<(mode==="pacman"?120:380);i++){
+    food.push(createFood());
+  }
+
+  spawnPlayer();
+
+  running=true;
+  paused=false;
+
+  $("modeHud").textContent=mode.toUpperCase();
+
+  updateRecord();
+  updateScore();
+  refreshCoins();
+
+  showScreen(null);
+  resetJoystick();
+}
+
+$("startBtn").onclick=startGame;
+$("retryBtn").onclick=startGame;
+
+function gameOver(win=false){
+  running=false;
+  resetJoystick();
+
+  $("endTitle").textContent=win
+    ?t().win
+    :t().gameOver;
+
+  $("endText").textContent=win
+    ?t().winText
+    :t().lostText;
+
+  sound(win?1100:180,.5,"sawtooth");
+  showScreen("gameover");
+}
+
+$("endMenuBtn").onclick=()=>showScreen("main");
+
+$("pauseBtn").onclick=()=>{
+  if(!running)return;
+
+  paused=true;
+  resetJoystick();
+  showScreen("pause");
+};
+
+$("resumeBtn").onclick=()=>{
+  paused=false;
+  resetJoystick();
+  showScreen(null);
+};
+
+$("quitBtn").onclick=()=>{
+  running=false;
+  paused=false;
+  resetJoystick();
+  showScreen("main");
+};
+
+// =====================================
+// JOYSTICK ANDROID / MULTITOUCH
+// =====================================
+
+// Joystickul are propria zonă tactilă.
+// Nu mai folosește canvasul pentru control.
+// Astfel poate fi ținut cu un deget în timp
+// ce alte degete apasă abilitățile.
+
+const joyElement=$("joy");
+const knob=$("knob");
+
+const joystick={
+  active:false,
+  pointerId:null,
+  x:0,
+  y:0,
+  touchId:null
+};
+
+function updateKnob(){
+  const rect=joyElement.getBoundingClientRect();
+  const radius=Math.max(20,rect.width/2-28);
+
+  knob.style.transform=
+    `translate3d(${joystick.x*radius}px,`+
+    `${joystick.y*radius}px,0)`;
+}
+
+function setJoystickPosition(clientX,clientY){
+  const rect=joyElement.getBoundingClientRect();
+
+  const cx=rect.left+rect.width/2;
+  const cy=rect.top+rect.height/2;
+
+  let dx=clientX-cx;
+  let dy=clientY-cy;
+
+  const maximum=Math.max(20,rect.width/2-28);
+  const length=Math.hypot(dx,dy);
+
+  if(length>maximum){
+    dx=dx/length*maximum;
+    dy=dy/length*maximum;
+  }
+
+  joystick.x=dx/maximum;
+  joystick.y=dy/maximum;
+
+  // Mică zonă moartă pentru stabilitate.
+  if(Math.hypot(joystick.x,joystick.y)<.09){
+    joystick.x=0;
+    joystick.y=0;
+  }
+
+  updateKnob();
+}
+
+function resetJoystick(){
+  joystick.active=false;
+  joystick.pointerId=null;
+  joystick.touchId=null;
+  joystick.x=0;
+  joystick.y=0;
+
+  if(knob){
+    knob.style.transform="translate3d(0,0,0)";
+  }
+}
+
+// Pointer Events: Chrome, Samsung Internet,
+// Edge, Firefox și alte browsere moderne.
+
+if(window.PointerEvent){
+  joyElement.addEventListener("pointerdown",e=>{
+    if(!running||paused)return;
+    if(joystick.active)return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    joystick.active=true;
+    joystick.pointerId=e.pointerId;
+
+    setJoystickPosition(e.clientX,e.clientY);
+
+    try{
+      joyElement.setPointerCapture(e.pointerId);
+    }catch{}
+  });
+
+  joyElement.addEventListener("pointermove",e=>{
+    if(!joystick.active)return;
+    if(e.pointerId!==joystick.pointerId)return;
+
+    e.preventDefault();
+    setJoystickPosition(e.clientX,e.clientY);
+  });
+
+  function stopPointer(e){
+    if(e.pointerId!==joystick.pointerId)return;
+
+    e.preventDefault();
+    resetJoystick();
+  }
+
+  joyElement.addEventListener("pointerup",stopPointer);
+  joyElement.addEventListener("pointercancel",stopPointer);
+
+  joyElement.addEventListener("lostpointercapture",e=>{
+    if(e.pointerId===joystick.pointerId){
+      resetJoystick();
+    }
+  });
+}
+
+// Fallback pentru browsere care nu au PointerEvent.
+else{
+  joyElement.addEventListener("touchstart",e=>{
+    if(!running||paused||joystick.active)return;
+
+    e.preventDefault();
+
+    const touch=e.changedTouches[0];
+    if(!touch)return;
+
+    joystick.active=true;
+    joystick.touchId=touch.identifier;
+
+    setJoystickPosition(touch.clientX,touch.clientY);
+  },{passive:false});
+
+  joyElement.addEventListener("touchmove",e=>{
+    if(!joystick.active)return;
+
+    for(const touch of e.changedTouches){
+      if(touch.identifier===joystick.touchId){
+        e.preventDefault();
+
+        setJoystickPosition(
+          touch.clientX,
+          touch.clientY
+        );
+        break;
+      }
+    }
+  },{passive:false});
+
+  function stopTouch(e){
+    for(const touch of e.changedTouches){
+      if(touch.identifier===joystick.touchId){
+        resetJoystick();
+        break;
+      }
+    }
+  }
+
+  joyElement.addEventListener("touchend",stopTouch);
+  joyElement.addEventListener("touchcancel",stopTouch);
+}
+
+// Nu lăsa meniul contextual să apară
+// la apăsare lungă pe joystick.
+joyElement.addEventListener("contextmenu",e=>{
+  e.preventDefault();
+});
+
+// Dacă utilizatorul schimbă aplicația sau
+// blochează telefonul, joystickul se oprește.
+window.addEventListener("blur",()=>{
+  keys={};
+  resetJoystick();
+});
+
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden){
+    keys={};
+    resetJoystick();
+  }
+});
+
+// =====================================
+// TASTATURĂ
+// =====================================
+
+let keys={};
+
+window.addEventListener("keydown",e=>{
+  keys[e.key.toLowerCase()]=true;
+
+  if([
+    "ArrowUp","ArrowDown",
+    "ArrowLeft","ArrowRight"," "
+  ].includes(e.key)){
+    e.preventDefault();
+  }
+
+  if(e.repeat)return;
+
+  if(e.key===" ")activateDash();
+  if(e.key.toLowerCase()==="q")activateSkill();
+  if(e.key.toLowerCase()==="f")activateFreeze();
+});
+
+window.addEventListener("keyup",e=>{
+  keys[e.key.toLowerCase()]=false;
+});
+
+// =====================================
+// ABILITĂȚI / MULTITOUCH
+// =====================================
+
+function activateDash(){
+  if(!running||paused||dashCooldown>0)return;
+
+  dashCooldown=300;
+  dashTimer=18;
+
+  sound(650,.12,"square");
+}
+
+function activateSplit(){
+  if(!running||paused||player.radius<=25)return;
+
+  player.radius-=5;
+  dashTimer=15;
+
+  sound(500,.2,"sawtooth");
+}
+
+function activateFreeze(){
+  if(!running||paused)return;
+
+  freezeTimer=120;
+  sound(850,.3);
+}
+
+function activateSkill(){
+  if(!running||paused||skillCooldown>0)return;
+
+  skillCooldown=600;
+  skillTimer=300;
+
+  if(skill==="blackhole"){
+    bots.forEach(b=>{
+      const dx=player.x-b.x;
+      const dy=player.y-b.y;
+      const d=Math.hypot(dx,dy)||1;
+
+      if(d<450){
+        b.x+=dx/d*90;
+        b.y+=dy/d*90;
+      }
+    });
+  }
+
+  sound(900,.3);
+}
+
+// Butoanele sunt independente de joystick.
+// Funcționează chiar când un deget ține
+// joystickul apăsat.
+
+function bindAction(id,fn){
+  const element=$(id);
+
+  if(window.PointerEvent){
+    element.addEventListener("pointerdown",e=>{
+      e.preventDefault();
+      e.stopPropagation();
+
+      if(e.pointerType==="mouse"&&e.button!==0)return;
+
+      fn();
+    });
+  }else{
+    element.addEventListener("touchstart",e=>{
+      e.preventDefault();
+      e.stopPropagation();
+      fn();
+    },{passive:false});
+
+    element.addEventListener("click",fn);
+  }
+
+  element.addEventListener("contextmenu",e=>{
+    e.preventDefault();
+  });
+}
+
+bindAction("dashBtn",activateDash);
+bindAction("splitBtn",activateSplit);
+bindAction("freezeBtn",activateFreeze);
+bindAction("skillBtn",activateSkill);
+
+// =====================================
+// GRAFICĂ CU EFECT 3D
+// =====================================
+
+function orbColor(color){
+  if(color==="rainbow"){
+    return `hsl(${(frame*2)%360},100%,55%)`;
+  }
+
+  if(color==="pulse"){
+    return `hsl(190,100%,${50+Math.sin(frame*.08)*15}%)`;
+  }
+
+  if(color==="matrix"){
+    return "#00ff66";
+  }
+
+  return color;
+}
+
+function drawOrb3D(x,y,r,color,angle=0){
+  if(r<.5)return;
+
+  color=orbColor(color);
+
+  ctx.save();
+
+  // Umbra
+  ctx.fillStyle="rgba(0,0,0,.42)";
+  ctx.beginPath();
+  ctx.ellipse(
+    x+r*.12,
+    y+r*.28,
+    r*.92,
+    r*.45,
+    0,0,Math.PI*2
+  );
+  ctx.fill();
+
+  // Sfera
+  const gradient=ctx.createRadialGradient(
+    x-r*.35,
+    y-r*.42,
+    r*.04,
+    x+r*.12,
+    y+r*.18,
+    r*1.25
+  );
+
+  gradient.addColorStop(0,"#ffffff");
+  gradient.addColorStop(.18,color);
+  gradient.addColorStop(.60,color);
+  gradient.addColorStop(1,"#030713");
+
+  ctx.shadowColor=color;
+  ctx.shadowBlur=Math.min(35,r*.9);
+
+  ctx.fillStyle=gradient;
+  ctx.beginPath();
+  ctx.arc(x,y,r,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.shadowBlur=0;
+  ctx.strokeStyle="rgba(220,245,255,.35)";
+  ctx.lineWidth=Math.max(1,r*.04);
+  ctx.stroke();
+
+  // Reflexie
+  ctx.fillStyle="rgba(255,255,255,.28)";
+  ctx.beginPath();
+  ctx.ellipse(
+    x-r*.3,
+    y-r*.42,
+    r*.22,
+    r*.11,
+    -.5,
+    0,Math.PI*2
+  );
+  ctx.fill();
+
+  // Ochii
+  const fx=Math.cos(angle);
+  const fy=Math.sin(angle);
+
+  for(const side of [-1,1]){
+    const ex=x+fx*r*.34-fy*side*r*.32;
+    const ey=y+fy*r*.34+fx*side*r*.32;
+
+    ctx.fillStyle="#ffffff";
+    ctx.beginPath();
+    ctx.ellipse(
+      ex,ey,
+      r*.19,r*.22,
+      0,0,Math.PI*2
+    );
+    ctx.fill();
+
+    ctx.fillStyle="#06101c";
+    ctx.beginPath();
+    ctx.arc(
+      ex+fx*r*.07,
+      ey+fy*r*.07,
+      r*.095,
+      0,Math.PI*2
+    );
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+function drawFood3D(x,y,r,color){
+  ctx.save();
+
+  ctx.shadowColor=color;
+  ctx.shadowBlur=14;
+
+  const gradient=ctx.createRadialGradient(
+    x-r*.3,y-r*.3,0,
+    x,y,r
+  );
+
+  gradient.addColorStop(0,"#ffffff");
+  gradient.addColorStop(.4,color);
+  gradient.addColorStop(1,"#091023");
+
+  ctx.fillStyle=gradient;
+  ctx.beginPath();
+  ctx.arc(x,y,r,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawFloor(){
+  const w=canvas.width;
+  const h=canvas.height;
+
+  const bg=ctx.createLinearGradient(0,0,0,h);
+
+  bg.addColorStop(0,"#0a1122");
+  bg.addColorStop(1,"#02040b");
+
+  ctx.fillStyle=bg;
+  ctx.fillRect(0,0,w,h);
+
+  const spacing=Math.max(35,100*zoom);
+
+  const ox=(
+    (-player.x*zoom)%spacing+spacing
+  )%spacing;
+
+  const oy=(
+    (-player.y*zoom)%spacing+spacing
+  )%spacing;
+
+  ctx.strokeStyle="rgba(34,165,225,.15)";
+  ctx.lineWidth=1;
+  ctx.beginPath();
+
+  for(let x=ox;x<w;x+=spacing){
+    ctx.moveTo(x,0);
+    ctx.lineTo(x,h);
+  }
+
+  for(let y=oy;y<h;y+=spacing){
+    ctx.moveTo(0,y);
+    ctx.lineTo(w,y);
+  }
+
+  ctx.stroke();
+
+  const glow=ctx.createRadialGradient(
+    w/2,h/2,20,
+    w/2,h/2,Math.max(w,h)*.7
+  );
+
+  glow.addColorStop(0,"rgba(0,170,255,.09)");
+  glow.addColorStop(1,"rgba(0,0,0,.55)");
+
+  ctx.fillStyle=glow;
+  ctx.fillRect(0,0,w,h);
+}
+
+function screenPos(x,y){
+  return{
+    x:(x-player.x)*zoom+canvas.width/2,
+    y:(y-player.y)*zoom+canvas.height/2
+  };
+}
+
+function visible(x,y,r=30){
+  return x>-r&&
+    y>-r&&
+    x<canvas.width+r&&
+    y<canvas.height+r;
+}
+
+function drawWalls(){
+  for(const w of walls){
+    const p=screenPos(w.x,w.y);
+
+    const ww=w.w*zoom;
+    const hh=w.h*zoom;
+    const depth=Math.max(6,16*zoom);
+
+    ctx.fillStyle="#101629";
+    ctx.fillRect(p.x,p.y,ww,hh);
+
+    ctx.fillStyle="#30334f";
+    ctx.beginPath();
+    ctx.moveTo(p.x,p.y);
+    ctx.lineTo(p.x+depth,p.y-depth);
+    ctx.lineTo(p.x+ww+depth,p.y-depth);
+    ctx.lineTo(p.x+ww,p.y);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle="#ff26e9";
+    ctx.lineWidth=Math.max(1,2*zoom);
+    ctx.shadowColor="#ff00ee";
+    ctx.shadowBlur=10;
+    ctx.strokeRect(p.x,p.y,ww,hh);
+    ctx.shadowBlur=0;
+  }
+}
+
+function drawParticles(){
+  for(const p of particles){
+    const s=screenPos(p.x,p.y);
+
+    ctx.globalAlpha=Math.max(0,p.life/25);
+    ctx.fillStyle=p.color;
+    ctx.fillRect(s.x,s.y,3*zoom,3*zoom);
+  }
+
+  ctx.globalAlpha=1;
+}
+
+function burst(x,y,color,count=12){
+  for(let i=0;i<count;i++){
+    particles.push({
+      x,y,
+      vx:random(-4,4),
+      vy:random(-4,4),
+      life:25,
+      color
+    });
+  }
+}
+
+// =====================================
+// MIȘCARE
+// =====================================
+
+function movePlayer(){
+  let dx=0;
+  let dy=0;
+
+  // Joystick analogic.
+  if(joystick.active){
+    dx=joystick.x;
+    dy=joystick.y;
+  }
+
+  // Tastatură.
+  if(keys.w||keys.arrowup)dy=-1;
+  if(keys.s||keys.arrowdown)dy=1;
+  if(keys.a||keys.arrowleft)dx=-1;
+  if(keys.d||keys.arrowright)dx=1;
+
+  const length=Math.hypot(dx,dy);
+
+  if(length>0){
+    // Normalizare: aceeași viteză pe diagonală.
+    dx/=length;
+    dy/=length;
+
+    player.angle=Math.atan2(dy,dx);
+  }
+
+  let speed=player.baseSpeed;
+
+  if(dashTimer>0){
+    speed*=2.2;
+  }
+
+  if(skill==="giant"&&skillTimer>0){
+    speed*=.8;
+  }
+
+  const nx=clamp(
+    player.x+dx*speed,
+    player.radius,
+    MAP_SIZE-player.radius
+  );
+
+  const ny=clamp(
+    player.y+dy*speed,
+    player.radius,
+    MAP_SIZE-player.radius
+  );
+
+  if(!blocked(nx,player.y,player.radius)){
+    player.x=nx;
+  }
+
+  if(!blocked(player.x,ny,player.radius)){
+    player.y=ny;
+  }
+
+  player.trail.push({
+    x:player.x,
+    y:player.y,
+    radius:player.radius,
+    life:12
+  });
+
+  if(player.trail.length>12){
+    player.trail.shift();
+  }
+}
+
+function updateFood(){
+  for(let i=food.length-1;i>=0;i--){
+    const f=food[i];
+
+    if(distance(player,f)<player.radius+f.radius){
+      player.radius+=mode==="pacman"?.5:.25;
+
+      coins++;
+      save("nd_coins",coins);
+      refreshCoins();
+
+      sound(1000,.055);
+      burst(f.x,f.y,f.color,4);
+
+      if(mode==="pacman"){
+        food.splice(i,1);
+      }else{
+        food[i]=createFood();
+      }
+    }
+  }
+}
+
+function updateBots(){
+  const multiplier=difficulty==="easy"
+    ?.6
+    :difficulty==="hard"
+    ?1.2
+    :.9;
+
+  for(let i=bots.length-1;i>=0;i--){
+    const b=bots[i];
+
+    const speed=Math.max(
+      .6,
+      (18/b.radius)*multiplier
+    );
+
+    const d=distance(player,b);
+
+    if(
+      spawnProtection===0&&
+      b.radius>player.radius*1.05&&
+      d<400
+    ){
+      b.angle=Math.atan2(
+        player.y-b.y,
+        player.x-b.x
+      );
+    }else if(
+      player.radius>b.radius*1.05&&
+      d<250
+    ){
+      b.angle=Math.atan2(
+        b.y-player.y,
+        b.x-player.x
+      );
+    }else{
+      let closest=null;
+      let best=200;
+
+      for(const f of food){
+        const fd=distance(b,f);
+
+        if(fd<best){
+          best=fd;
+          closest=f;
+        }
+      }
+
+      if(closest){
+        b.angle=Math.atan2(
+          closest.y-b.y,
+          closest.x-b.x
+        );
+      }else if(Math.random()<.03){
+        b.angle+=random(-.6,.6);
+      }
+    }
+
+    if(freezeTimer===0){
+      b.x+=Math.cos(b.angle)*speed;
+      b.y+=Math.sin(b.angle)*speed;
+    }
+
+    b.x=clamp(
+      b.x,b.radius,MAP_SIZE-b.radius
+    );
+
+    b.y=clamp(
+      b.y,b.radius,MAP_SIZE-b.radius
+    );
+
+    for(let j=0;j<food.length;j++){
+      const f=food[j];
+
+      if(distance(b,f)<b.radius+f.radius){
+        b.radius+=.15;
+        food[j]=createFood();
+        break;
+      }
+    }
+
+    if(
+      spawnProtection===0&&
+      distance(player,b)<player.radius+b.radius
+    ){
+      if(player.radius>b.radius*1.05){
+        player.radius+=b.radius*.35;
+
+        burst(b.x,b.y,b.color,18);
+        bots[i]=createBot();
+
+        sound(1200,.18);
+      }else if(
+        b.radius>player.radius*1.05&&
+        !(skill==="ghost"&&skillTimer>0)
+      ){
+        gameOver(false);
+        return;
+      }
+    }
+  }
+}
+
+function updateGuards(){
+  for(const g of guards){
+    g.angle=Math.atan2(
+      player.y-g.y,
+      player.x-g.x
+    );
+
+    if(freezeTimer===0){
+      const nx=g.x+Math.cos(g.angle)*g.speed;
+      const ny=g.y+Math.sin(g.angle)*g.speed;
+
+      if(!blocked(nx,ny,g.radius)){
+        g.x=nx;
+        g.y=ny;
+      }
+    }
+
+    if(
+      spawnProtection===0&&
+      distance(g,player)<g.radius+player.radius&&
+      !(skill==="ghost"&&skillTimer>0)
+    ){
+      gameOver(false);
+      return;
+    }
+  }
+}
+
+function updateParticles(){
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+
+    p.x+=p.vx;
+    p.y+=p.vy;
+    p.vx*=.96;
+    p.vy*=.96;
+    p.life--;
+
+    if(p.life<=0){
+      particles.splice(i,1);
+    }
+  }
+}
+
+function updateGame(){
+  frame++;
+
+  if(spawnProtection>0)spawnProtection--;
+  if(dashCooldown>0)dashCooldown--;
+  if(skillCooldown>0)skillCooldown--;
+  if(skillTimer>0)skillTimer--;
+  if(freezeTimer>0)freezeTimer--;
+  if(dashTimer>0)dashTimer--;
+
+  movePlayer();
+  updateFood();
+
+  if(mode==="pacman"){
+    updateGuards();
+  }else{
+    updateBots();
+  }
+
+  if(!running)return;
+
+  updateParticles();
+
+  if(
+    mode==="boss"&&
+    !bossSpawned&&
+    frame>600
+  ){
+    const boss=createBot();
+
+    boss.radius=85;
+    boss.color="#ff0044";
+
+    boss.x=clamp(
+      player.x+350,100,MAP_SIZE-100
+    );
+
+    boss.y=clamp(
+      player.y+350,100,MAP_SIZE-100
+    );
+
+    bots.push(boss);
+    bossSpawned=true;
+
+    notify(t().bossNotice);
+  }
+
+  const targetZoom=Math.max(
+    .25,
+    30/player.radius
+  );
+
+  zoom+=(targetZoom-zoom)*.1;
+
+  updateScore();
+
+  if(
+    player.radius>=200||
+    (mode==="pacman"&&food.length===0)
+  ){
+    gameOver(true);
+  }
+
+  $("dashBtn").style.opacity=
+    dashCooldown>0?".5":"1";
+
+  $("skillBtn").style.opacity=
+    skillCooldown>0?".5":"1";
+}
+
+// =====================================
+// DESENARE
+// =====================================
+
+function drawGame(){
+  drawFloor();
+
+  if(mode==="pacman"){
+    drawWalls();
+  }
+
+  // Urmele
+  for(const trail of player.trail){
+    const p=screenPos(trail.x,trail.y);
+
+    ctx.globalAlpha=Math.max(0,trail.life/50);
+    ctx.fillStyle="#44aaff";
+
+    ctx.beginPath();
+    ctx.arc(
+      p.x,p.y,
+      trail.radius*.8*zoom,
+      0,Math.PI*2
+    );
+    ctx.fill();
+
+    trail.life--;
+  }
+
+  ctx.globalAlpha=1;
+
+  // Mâncare
+  for(const f of food){
+    const p=screenPos(f.x,f.y);
+    const r=Math.max(2,f.radius*zoom);
+
+    if(visible(p.x,p.y,r)){
+      drawFood3D(p.x,p.y,r,f.color);
+    }
+  }
+
+  // Boți
+  if(mode!=="pacman"){
+    for(const b of bots){
+      const p=screenPos(b.x,b.y);
+      const r=b.radius*zoom;
+
+      if(visible(p.x,p.y,r)){
+        drawOrb3D(
+          p.x,p.y,r,b.color,b.angle
+        );
+      }
+    }
+  }else{
+    for(const g of guards){
+      const p=screenPos(g.x,g.y);
+
+      drawOrb3D(
+        p.x,p.y,
+        g.radius*zoom,
+        "#ff0033",
+        g.angle
+      );
+    }
+  }
+
+  drawParticles();
+
+  // Jucător
+  const cx=canvas.width/2;
+  const cy=canvas.height/2;
+
+  let r=player.radius*zoom;
+
+  if(skill==="giant"&&skillTimer>0){
+    r*=1.5;
+  }
+
+  if(spawnProtection>0){
+    ctx.strokeStyle="#00ffff";
+    ctx.lineWidth=3;
+    ctx.shadowColor="#00ffff";
+    ctx.shadowBlur=15;
+
+    ctx.beginPath();
+    ctx.arc(
+      cx,cy,
+      r+10+Math.sin(frame*.1)*4,
+      0,Math.PI*2
+    );
+    ctx.stroke();
+
+    ctx.shadowBlur=0;
+  }
+
+  if(aura!=="none"){
+    ctx.strokeStyle=aura;
+    ctx.lineWidth=4;
+    ctx.shadowColor=aura;
+    ctx.shadowBlur=25;
+
+    ctx.beginPath();
+    ctx.arc(cx,cy,r+14,0,Math.PI*2);
+    ctx.stroke();
+
+    ctx.shadowBlur=0;
+  }
+
+  if(skill==="ghost"&&skillTimer>0){
+    ctx.globalAlpha=.48;
+  }
+
+  drawOrb3D(
+    cx,cy,r,
+    player.color,
+    player.angle
+  );
+
+  ctx.globalAlpha=1;
+
+  drawMinimap();
+}
+
+function drawMinimap(){
+  mctx.fillStyle="#030814";
+  mctx.fillRect(0,0,90,90);
+
+  const scale=90/MAP_SIZE;
+
+  mctx.fillStyle="#ff3355";
+
+  for(const b of bots){
+    mctx.fillRect(
+      b.x*scale,
+      b.y*scale,
+      2,2
+    );
+  }
+
+  for(const g of guards){
+    mctx.fillRect(
+      g.x*scale,
+      g.y*scale,
+      3,3
+    );
+  }
+
+  mctx.fillStyle="#49caff";
+
+  mctx.fillRect(
+    player.x*scale-2,
+    player.y*scale-2,
+    4,4
+  );
+}
+
+// =====================================
+// FUNDAL MENIU
+// =====================================
+
+const menuOrbs=Array.from({length:24},()=>({
+  x:random(0,innerWidth),
+  y:random(0,innerHeight),
+  vx:random(-1,1),
+  vy:random(-1,1),
+  radius:random(5,18),
+  color:[
+    "#44aaff",
+    "#ff3355",
+    "#33ff99",
+    "#ffee44"
+  ][Math.floor(Math.random()*4)]
+}));
+
+function drawMenuBackground(){
+  ctx.fillStyle="#02040b";
+
+  ctx.fillRect(
+    0,0,
+    canvas.width,
+    canvas.height
+  );
+
+  for(const b of menuOrbs){
+    b.x+=b.vx;
+    b.y+=b.vy;
+
+    if(b.x<0||b.x>canvas.width){
+      b.vx*=-1;
+    }
+
+    if(b.y<0||b.y>canvas.height){
+      b.vy*=-1;
+    }
+
+    drawOrb3D(
+      b.x,b.y,
+      b.radius,b.color,0
+    );
+  }
+}
+
+// =====================================
+// ANIMAȚIE
+// =====================================
+
+let lastFrame=0;
+
+function loop(timestamp){
+  requestAnimationFrame(loop);
+
+  if(timestamp-lastFrame<15)return;
+
+  lastFrame=timestamp;
+
+  if(!running){
+    drawMenuBackground();
+    return;
+  }
+
+  if(paused)return;
+
+  updateGame();
+
+  if(running){
+    drawGame();
+  }
+}
+
+// =====================================
+// PORNIRE
+// =====================================
+
+resize();
+showScreen("main");
+translateGame();
+refreshCoins();
+updateRecord();
+
+requestAnimationFrame(loop);
+
+</script>
+</body>
+</html>
