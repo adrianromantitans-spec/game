@@ -393,7 +393,7 @@
         let selectedSkill = 'ghost';
         let currentLang = 'ro';
         let playerSkin = '#4af';
-        let playerParticleType = 'lightning'; // lightning, stars, hearts, matrix
+        let playerParticleType = 'lightning';
         let playerAuraColor = '#4af';
         let audioVolume = 0.5;
 
@@ -491,18 +491,12 @@
         let skillCooldown = 0;
         const MAX_SKILL_COOLDOWN = 600;
         let activeSkillTimer = 0;
-        let spawnProtection = 0; // Protecție la spawn pentru boți
+        let spawnProtection = 0;
 
         let player = {
             x: 150, y: 150,
             radius: 15, color: '#4af', baseSpeed: 4.5, speed: 4.5,
-            vx: 0, vy: 0
-        };
-
-        let player2 = {
-            x: 200, y: 200,
-            radius: 15, color: '#3f9', baseSpeed: 4.5, speed: 4.5,
-            vx: 0, vy: 0
+            vx: 0, vy: 0, angle: 0
         };
 
         let bots = [];
@@ -648,7 +642,7 @@
         function initEntities() {
             bots = []; pacmanGuards = []; bossBot = null; food = []; powerups = []; traps = []; blackHoles = []; labirinthWalls = []; particles = [];
             MAP_SIZE = selectedMode === 'survival' ? 2500 : (selectedMode === 'pacman' ? 2000 : 3000);
-            spawnProtection = 180; // 3 secunde de imunitate la începutul meciului unde boții te ignoră
+            spawnProtection = 180; // 3 secunde imunitate/ignorare din partea boților la start
 
             let speedMult = selectedDifficulty === 'easy' ? 1.5 : (selectedDifficulty === 'mid' ? 2.5 : 4.0);
 
@@ -681,6 +675,7 @@
                     radius: 70, vx: 2, vy: 2, baseSpeed: 2.0
                 };
             } else if (selectedMode !== 'pvp') {
+                // Generare boți normali pe Classic și Survival
                 for (let i = 0; i < (selectedMode === 'survival' ? 45 : 30); i++) {
                     let bRadius = Math.random() > 0.3 ? (Math.random() * 25 + 10) : (Math.random() * 60 + 20);
                     bots.push({
@@ -690,7 +685,7 @@
                         vx: (Math.random() - 0.5) * speedMult,
                         vy: (Math.random() - 0.5) * speedMult,
                         baseSpeed: speedMult,
-                        color: ['#f36', '#ff3', '#0ff', '#f90'][Math.floor(Math.random() * 4)]
+                        color: ['#f36', '#ff3', '#0ff', '#f90', '#3f9'][Math.floor(Math.random() * 5)]
                     });
                 }
             }
@@ -911,6 +906,38 @@
             updateRecordDisplay();
         }
 
+        // Funcție pentru desenat ochi pe entități (jucător sau boți)
+        function drawEyes(x, y, radius, angle) {
+            let eyeOffset = radius * 0.35;
+            let eyeRadius = Math.max(3, radius * 0.2);
+            let pupilRadius = Math.max(1.5, radius * 0.1);
+
+            let leftEyeX = x + Math.cos(angle - 0.6) * eyeOffset;
+            let leftEyeY = y + Math.sin(angle - 0.6) * eyeOffset;
+            let rightEyeX = x + Math.cos(angle + 0.6) * eyeOffset;
+            let rightEyeY = y + Math.sin(angle + 0.6) * eyeOffset;
+
+            // Ochi stâng
+            ctx.beginPath();
+            ctx.arc(leftEyeX, leftEyeY, eyeRadius, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(leftEyeX + Math.cos(angle)*1.5, leftEyeY + Math.sin(angle)*1.5, pupilRadius, 0, Math.PI * 2);
+            ctx.fillStyle = '#000';
+            ctx.fill();
+
+            // Ochi drept
+            ctx.beginPath();
+            ctx.arc(rightEyeX, rightEyeY, eyeRadius, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(rightEyeX + Math.cos(angle)*1.5, rightEyeY + Math.sin(angle)*1.5, pupilRadius, 0, Math.PI * 2);
+            ctx.fillStyle = '#000';
+            ctx.fill();
+        }
+
         function gameLoop() {
             animationFrame = requestAnimationFrame(gameLoop);
 
@@ -952,15 +979,16 @@
                 let dist = Math.hypot(dx, dy);
                 if (dist > 5) {
                     let angle = Math.atan2(dy, dx);
+                    player.angle = angle;
                     nextX += Math.cos(angle) * player.speed;
                     nextY += Math.sin(angle) * player.speed;
                 }
             }
 
-            if (keys['w'] || keys['arrowup']) nextY -= player.speed;
-            if (keys['s'] || keys['arrowdown']) nextY += player.speed;
-            if (keys['a'] || keys['arrowleft']) nextX -= player.speed;
-            if (keys['d'] || keys['arrowright']) nextX += player.speed;
+            if (keys['w'] || keys['arrowup']) { nextY -= player.speed; player.angle = -Math.PI/2; }
+            if (keys['s'] || keys['arrowdown']) { nextY += player.speed; player.angle = Math.PI/2; }
+            if (keys['a'] || keys['arrowleft']) { nextX -= player.speed; player.angle = Math.PI; }
+            if (keys['d'] || keys['arrowright']) { nextX += player.speed; player.angle = 0; }
 
             let canMove = true;
             if (selectedMode === 'pacman') {
@@ -995,7 +1023,7 @@
                 ctx.shadowBlur = 0;
             }
 
-            // Mâncare clasică / Pacman
+            // Mâncare pe hartă
             food.forEach((f, index) => {
                 let screenX = f.x - player.x + canvas.width / 2;
                 let screenY = f.y - player.y + canvas.height / 2;
@@ -1015,7 +1043,7 @@
                 ctx.fill();
             });
 
-            // Logică Boți normali (cu verificare să nu te atace instant dacă ești mic sau sub protecție)
+            // Randare Boți normali cu tot cu ochi și logica lor de mișcare/ataca
             if (selectedMode !== 'pacman' && selectedMode !== 'boss') {
                 bots.forEach((b, index) => {
                     b.x += b.vx;
@@ -1024,7 +1052,6 @@
                     if (b.x < b.radius || b.x > MAP_SIZE - b.radius) b.vx *= -1;
                     if (b.y < b.radius || b.y > MAP_SIZE - b.radius) b.vy *= -1;
 
-                    // Boții nu te atacă agresiv dacă ai protecție la spawn sau dacă ești mai mare / ei sunt mici
                     let distToPlayer = Math.hypot(player.x - b.x, player.y - b.y);
                     if (spawnProtection === 0 && b.radius > player.radius * 1.1 && distToPlayer < 300) {
                         let angle = Math.atan2(player.y - b.y, player.x - b.x);
@@ -1032,7 +1059,6 @@
                         b.y += Math.sin(angle) * (b.baseSpeed * 0.5);
                     }
 
-                    // Coliziune cu jucătorul
                     if (distToPlayer < player.radius + b.radius) {
                         if (player.radius > b.radius * 1.05 && spawnProtection === 0) {
                             player.radius += b.radius * 0.3;
@@ -1053,6 +1079,10 @@
                     ctx.arc(bScreenX, bScreenY, b.radius, 0, Math.PI * 2);
                     ctx.fillStyle = b.color;
                     ctx.fill();
+
+                    // Desenăm ochii și pe boți
+                    let bAngle = Math.atan2(b.vy, b.vx);
+                    drawEyes(bScreenX, bScreenY, b.radius, bAngle);
                 });
             }
 
@@ -1073,6 +1103,8 @@
                     ctx.shadowColor = '#ff0033';
                     ctx.fill();
                     ctx.shadowBlur = 0;
+
+                    drawEyes(gScreenX, gScreenY, g.radius, angle);
 
                     if (Math.hypot(player.x - g.x, player.y - g.y) < player.radius + g.radius && spawnProtection === 0) {
                         gameRunning = false;
@@ -1106,7 +1138,7 @@
                 ctx.shadowBlur = 0;
             }
 
-            // Jucător
+            // Jucător principal
             ctx.beginPath();
             ctx.arc(canvas.width / 2, canvas.height / 2, player.radius, 0, Math.PI * 2);
             ctx.fillStyle = player.color;
@@ -1114,6 +1146,9 @@
             ctx.shadowColor = player.color;
             ctx.fill();
             ctx.shadowBlur = 0;
+
+            // Desenare ochi jucător
+            drawEyes(canvas.width / 2, canvas.height / 2, player.radius, player.angle || 0);
 
             // Joystick vizual
             if (joystick.active) {
