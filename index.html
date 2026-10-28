@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Devorator - Fully Optimized Edition</title>
+    <title>Neon Devorator - Ultimate Edition</title>
     <style>
         * {
             box-sizing: border-box;
@@ -414,6 +414,9 @@
         let activeShopTab = 'skins';
         let audioVolume = 0.5;
 
+        // Timer de invincibilitate la start (3 secunde = 180 frame-uri la 60fps)
+        let spawnInvincibilityTimer = 0;
+
         let neonCoins = parseInt(localStorage.getItem('nd_coins')) || 0;
         document.getElementById('coinsVal').innerText = neonCoins;
 
@@ -691,6 +694,8 @@
             bots = []; food = []; pacmanGuards = []; labirinthWalls = []; player.trail = [];
             MAP_SIZE = selectedMode === 'survival' ? 2500 : (selectedMode === 'pacman' ? 2000 : 3000);
 
+            spawnInvincibilityTimer = 180; // 3 secunde (la 60fps) de invincibilitate / invizibilitate față de boți
+
             if (selectedMode === 'pacman') {
                 for (let i = 0; i < 18; i++) {
                     labirinthWalls.push({
@@ -925,7 +930,6 @@
             ctx.fill();
         }
 
-        // Procesare și Randare Mâncare
         function updateAndDrawFood() {
             let halfW = canvas.width / 2;
             let halfH = canvas.height / 2;
@@ -933,7 +937,6 @@
             for (let i = food.length - 1; i >= 0; i--) {
                 let f = food[i];
 
-                // Verificare Coliziune Jucător
                 if (Math.hypot(player.x - f.x, player.y - f.y) < player.radius + f.radius) {
                     player.radius += selectedMode === 'pacman' ? 0.5 : 0.25;
                     neonCoins += 1;
@@ -944,12 +947,11 @@
                     if (selectedMode === 'pacman') {
                         food.splice(i, 1);
                     } else {
-                        food[i] = createSingleFood(); // Respawn instant al mâncării
+                        food[i] = createSingleFood();
                     }
                     continue;
                 }
 
-                // Randare doar dacă mâncarea e vizibilă pe ecran (Culling pentru performanță)
                 let screenX = f.x - player.x + halfW;
                 let screenY = f.y - player.y + halfH;
 
@@ -963,7 +965,6 @@
             }
         }
 
-        // Logică Boți (AI + Mâncare + Vânătoare)
         function updateAndDrawBots() {
             let speedMult = selectedDifficulty === 'easy' ? 1.8 : (selectedDifficulty === 'mid' ? 2.8 : 3.8);
             let halfW = canvas.width / 2;
@@ -974,13 +975,12 @@
                 let moveSpeed = Math.max(1.3, (32 / b.radius) * speedMult);
                 let distToPlayer = Math.hypot(player.x - b.x, player.y - b.y);
 
-                // Decizie Inteligenta Bot
-                if (b.radius > player.radius * 1.05 && distToPlayer < 450) {
-                    b.angle = Math.atan2(player.y - b.y, player.x - b.x); // Vânează
-                } else if (player.radius > b.radius * 1.05 && distToPlayer < 300) {
-                    b.angle = Math.atan2(b.y - player.y, b.x - player.x); // Fuge
+                // Dacă jucătorul e în primele 3 secunde (invizibil), boții îl ignoră complet și caută doar mâncare!
+                if (spawnInvincibilityTimer === 0 && b.radius > player.radius * 1.05 && distToPlayer < 450) {
+                    b.angle = Math.atan2(player.y - b.y, player.x - b.x); 
+                } else if (spawnInvincibilityTimer === 0 && player.radius > b.radius * 1.05 && distToPlayer < 300) {
+                    b.angle = Math.atan2(b.y - player.y, b.x - player.x); 
                 } else {
-                    // Mănâncă mâncarea apropiată
                     let closestFood = null;
                     let minD = 250;
                     for (let f of food) {
@@ -1005,7 +1005,6 @@
                 if (b.y < b.radius) { b.y = b.radius; b.angle = -b.angle; }
                 if (b.y > MAP_SIZE - b.radius) { b.y = MAP_SIZE - b.radius; b.angle = -b.angle; }
 
-                // Verificare dacă botul mănâncă biluțe
                 for (let j = 0; j < food.length; j++) {
                     let f = food[j];
                     if (Math.hypot(f.x - b.x, f.y - b.y) < b.radius + f.radius) {
@@ -1015,11 +1014,11 @@
                     }
                 }
 
-                // Interacțiune Bot <-> Jucător
-                if (distToPlayer < player.radius + b.radius) {
+                // Coliziunea cu jucătorul are loc doar dacă timerul de invincibilitate a expirat
+                if (spawnInvincibilityTimer === 0 && distToPlayer < player.radius + b.radius) {
                     if (player.radius > b.radius * 1.05) {
                         player.radius += b.radius * 0.35;
-                        bots[i] = createBot(); // Bot nou regenerat
+                        bots[i] = createBot();
                         playSound(1200, 'sine', 0.2);
                         continue;
                     } else if (b.radius > player.radius * 1.05) {
@@ -1030,7 +1029,6 @@
                     }
                 }
 
-                // Randare pe Ecran
                 let bScreenX = b.x - player.x + halfW;
                 let bScreenY = b.y - player.y + halfH;
 
@@ -1072,6 +1070,7 @@
             if (dashCooldown > 0) dashCooldown--;
             if (skillCooldown > 0) skillCooldown--;
             if (activeSkillTimer > 0) activeSkillTimer--;
+            if (spawnInvincibilityTimer > 0) spawnInvincibilityTimer--;
 
             let dashPct = (dashCooldown / MAX_DASH_COOLDOWN) * 182.2;
             document.getElementById('dashProgress').style.strokeDashoffset = dashPct;
@@ -1112,7 +1111,6 @@
                 player.y = Math.max(player.radius, Math.min(MAP_SIZE - player.radius, nextY));
             }
 
-            // Dâra fluidă originală
             player.trail.push({ x: player.x, y: player.y, radius: player.radius, alpha: 0.6 });
             if (player.trail.length > 8) player.trail.shift();
 
@@ -1142,15 +1140,12 @@
                 ctx.shadowBlur = 0;
             }
 
-            // Randare & Update Mâncare
             updateAndDrawFood();
 
-            // Randare & Update AI Boți
             if (selectedMode !== 'pacman') {
                 updateAndDrawBots();
             }
 
-            // Pacman Guards
             if (selectedMode === 'pacman') {
                 pacmanGuards.forEach(g => {
                     let angle = Math.atan2(player.y - g.y, player.x - g.x);
@@ -1170,7 +1165,8 @@
 
                     drawEyes(gScreenX, gScreenY, g.radius, angle);
 
-                    if (Math.hypot(player.x - g.x, player.y - g.y) < player.radius + g.radius) {
+                    // Gardienii din Pacman ignoră și ei jucătorul în primele 3 secunde
+                    if (spawnInvincibilityTimer === 0 && Math.hypot(player.x - g.x, player.y - g.y) < player.radius + g.radius) {
                         gameRunning = false;
                         document.getElementById('gameOverTitle').innerText = translations[currentLang].loseTitle;
                         document.getElementById('gameOverSub').innerText = translations[currentLang].loseSub;
@@ -1179,7 +1175,18 @@
                 });
             }
 
-            // Aură
+            // Dacă este activă invincibilitatea de la spawn, afișăm o aură de protecție albastră care pulsează
+            if (spawnInvincibilityTimer > 0) {
+                ctx.beginPath();
+                ctx.arc(canvas.width / 2, canvas.height / 2, player.radius + 10, 0, Math.PI * 2);
+                ctx.strokeStyle = '#00ffff';
+                ctx.lineWidth = 4;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#00ffff';
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+
             if (activeSkillTimer > 0 && playerAuraColor !== 'none') {
                 ctx.beginPath();
                 ctx.arc(canvas.width / 2, canvas.height / 2, player.radius + 12, 0, Math.PI * 2);
