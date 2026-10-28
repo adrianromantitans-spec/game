@@ -744,16 +744,15 @@
                         x: Math.random() * (MAP_SIZE - 200) + 100,
                         y: Math.random() * (MAP_SIZE - 200) + 100,
                         radius: bRadius,
-                        vx: (Math.random() - 0.5) * speedMult,
-                        vy: (Math.random() - 0.5) * speedMult,
-                        baseSpeed: speedMult,
+                        angle: Math.random() * Math.PI * 2,
+                        baseSpeed: speedMult * (20 / bRadius), // Cei mici sunt mai rapizi
                         color: ['#f36', '#ff3', '#0ff', '#f90', '#3f9'][Math.floor(Math.random() * 5)]
                     });
                 }
             }
 
             if (selectedMode !== 'pacman') {
-                for (let i = 0; i < 300; i++) {
+                for (let i = 0; i < 400; i++) {
                     food.push({
                         x: Math.random() * (MAP_SIZE - 40) + 20,
                         y: Math.random() * (MAP_SIZE - 40) + 20,
@@ -920,7 +919,7 @@
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
-                selectedDifficulty = e.target.getAttribute('data-diff');
+                    selectedDifficulty = e.target.getAttribute('data-diff');
             });
         });
 
@@ -1065,6 +1064,7 @@
                 ctx.shadowBlur = 0;
             }
 
+            // Mâncare pe hartă (Mâncată de jucător și de boți)
             food.forEach((f, index) => {
                 let screenX = f.x - player.x + canvas.width / 2;
                 let screenY = f.y - player.y + canvas.height / 2;
@@ -1076,6 +1076,16 @@
                     localStorage.setItem('nd_coins', neonCoins);
                     document.getElementById('coinsVal').innerText = neonCoins;
                     playSound(1000, 'sine', 0.1);
+                    return;
+                }
+
+                // Boții mănâncă și ei mâncarea de pe jos
+                for (let b of bots) {
+                    if (Math.hypot(b.x - f.x, b.y - f.y) < b.radius + f.radius) {
+                        b.radius += 0.15;
+                        food.splice(index, 1);
+                        break;
+                    }
                 }
 
                 ctx.beginPath();
@@ -1084,21 +1094,46 @@
                 ctx.fill();
             });
 
+            // Inteligență Artificială Completă pentru Boți
             if (selectedMode !== 'pacman' && selectedMode !== 'boss') {
                 bots.forEach((b, index) => {
-                    b.x += b.vx;
-                    b.y += b.vy;
-
-                    if (b.x < b.radius || b.x > MAP_SIZE - b.radius) b.vx *= -1;
-                    if (b.y < b.radius || b.y > MAP_SIZE - b.radius) b.vy *= -1;
-
+                    // Căutare inteligentă: verifică jucătorul sau alt bot în apropiere
                     let distToPlayer = Math.hypot(player.x - b.x, player.y - b.y);
-                    if (b.radius > player.radius * 1.1 && distToPlayer < 350) {
-                        let angle = Math.atan2(player.y - b.y, player.x - b.x);
-                        b.x += Math.cos(angle) * (b.baseSpeed * 0.4);
-                        b.y += Math.sin(angle) * (b.baseSpeed * 0.4);
+                    let targetAngle = b.angle;
+
+                    if (b.radius > player.radius * 1.1 && distToPlayer < 400) {
+                        // Te vânează dacă e mai mare
+                        targetAngle = Math.atan2(player.y - b.y, player.x - b.x);
+                    } else if (player.radius > b.radius * 1.1 && distToPlayer < 300) {
+                        // Fuge de tine dacă ești mai mare
+                        targetAngle = Math.atan2(b.y - player.y, b.x - player.x);
+                    } else {
+                        // Caută mâncare apropiată sau rătăcește inteligent
+                        let nearestFood = null;
+                        let minDist = 250;
+                        for (let f of food) {
+                            let d = Math.hypot(b.x - f.x, b.y - f.y);
+                            if (d < minDist) {
+                                minDist = d;
+                                nearestFood = f;
+                            }
+                        }
+                        if (nearestFood) {
+                            targetAngle = Math.atan2(nearestFood.y - b.y, nearestFood.x - b.x);
+                        } else {
+                            if (Math.random() < 0.05) b.angle += (Math.random() - 0.5) * 2;
+                        }
                     }
 
+                    b.angle = targetAngle;
+                    let currentSpeed = b.baseSpeed * (15 / b.radius); // Cu cât e mai mare, cu atât se mișcă mai greu
+                    b.x += Math.cos(b.angle) * Math.max(1, currentSpeed);
+                    b.y += Math.sin(b.angle) * Math.max(1, currentSpeed);
+
+                    if (b.x < b.radius || b.x > MAP_SIZE - b.radius) b.angle = Math.PI - b.angle;
+                    if (b.y < b.radius || b.y > MAP_SIZE - b.radius) b.angle = -b.angle;
+
+                    // Coliziune bot cu jucătorul
                     if (distToPlayer < player.radius + b.radius) {
                         if (player.radius > b.radius * 1.05) {
                             player.radius += b.radius * 0.3;
@@ -1120,8 +1155,7 @@
                     ctx.fillStyle = b.color;
                     ctx.fill();
 
-                    let bAngle = Math.atan2(b.vy, b.vx);
-                    drawEyes(bScreenX, bScreenY, b.radius, bAngle);
+                    drawEyes(bScreenX, bScreenY, b.radius, b.angle);
                 });
             }
 
