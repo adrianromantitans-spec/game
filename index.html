@@ -723,10 +723,11 @@
             }
         }
 
-        function isPlayerBlockedByWall(x, y) {
+        function isPlayerBlockedByWall(x, y, clearance = 0) {
+            let collisionRadius = player.radius + clearance;
             return labirinthWalls.some(w =>
-                x + player.radius > w.x && x - player.radius < w.x + w.w &&
-                y + player.radius > w.y && y - player.radius < w.y + w.h
+                x + collisionRadius > w.x && x - collisionRadius < w.x + w.w &&
+                y + collisionRadius > w.y && y - collisionRadius < w.y + w.h
             );
         }
 
@@ -737,7 +738,7 @@
 
             for (let y = player.radius; y <= MAP_SIZE - player.radius; y += 10) {
                 for (let x = player.radius; x <= MAP_SIZE - player.radius; x += 10) {
-                    if (isPlayerBlockedByWall(x, y)) continue;
+                    if (isPlayerBlockedByWall(x, y, 32)) continue;
                     let distance = Math.hypot(x - center, y - center);
                     if (distance < bestDistance) {
                         bestPosition = { x, y };
