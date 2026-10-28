@@ -338,13 +338,13 @@
         <button id="btnOpenShop" class="menu-btn" style="border-color:#ff3; color:#ff3;">🛒 MAGAZIN</button>
     </div>
 
-    <!-- 2. Magazin cu Tab-uri Separate (Skin-uri / Aure) -->
+    <!-- 2. Magazin cu Tab-uri Separate -->
     <div id="screen-shop" class="menu-overlay hidden">
-        <h1 style="color:#ff3; text-shadow: 0 0 20px #ff3;">MAGAZIN</h1>
+        <h1 id="shopTitle" style="color:#ff3; text-shadow: 0 0 20px #ff3;">MAGAZIN</h1>
         
         <div class="shop-tabs">
-            <button class="shop-tab-btn active" data-tab="skins">Skin-uri</button>
-            <button class="shop-tab-btn" data-tab="auras">Aure Speciale</button>
+            <button class="shop-tab-btn active" data-tab="skins" id="tabSkins">Skin-uri</button>
+            <button class="shop-tab-btn" data-tab="auras" id="tabAuras">Aure Speciale</button>
         </div>
 
         <div class="shop-grid" id="shopGrid"></div>
@@ -389,7 +389,7 @@
 
     <!-- 4. Ecran Pauză -->
     <div id="screen-pause" class="menu-overlay hidden">
-        <h1 style="color:#ff3; text-shadow: 0 0 20px #ff3;">JOCUL ESTE PE PAUZĂ</h1>
+        <h1 id="pauseTitle" style="color:#ff3; text-shadow: 0 0 20px #ff3;">JOCUL ESTE PE PAUZĂ</h1>
         <button id="btnResume" class="menu-btn btn-primary">CONTINUĂ JOCUL</button>
         <button id="btnQuitToMenu" class="menu-btn" style="margin-top:10px; border-color:#f36; color:#f36;">MENIU PRINCIPAL</button>
     </div>
@@ -434,27 +434,147 @@
                 { id: 'matrix', name: 'Matrix', price: 100, owned: localStorage.getItem('skin_matrix') === 'true' }
             ],
             auras: [
-                { id: 'none', name: 'Fără Aură (Original)', price: 0, owned: true },
-                { id: '#ff0055', name: 'Aura Roșie', price: 100, owned: localStorage.getItem('cust_aurared') === 'true' },
-                { id: '#00ffcc', name: 'Aura Cyan', price: 150, owned: localStorage.getItem('cust_auracyan') === 'true' }
+                { id: 'none', name: { ro: 'Fără Aură (Original)', en: 'No Aura (Original)', es: 'Sin Aura (Original)' }, price: 0, owned: true },
+                { id: '#ff0055', name: { ro: 'Aura Roșie', en: 'Red Aura', es: 'Aura Roja' }, price: 100, owned: localStorage.getItem('cust_aurared') === 'true' },
+                { id: '#00ffcc', name: { ro: 'Aura Cyan', en: 'Cyan Aura', es: 'Aura Cian' }, price: 150, owned: localStorage.getItem('cust_auracyan') === 'true' }
             ]
         };
+
+        const translations = {
+            ro: {
+                mainTitle: "NEON DEVORATOR",
+                langLabel: "LIMBĂ / LANGUAGE",
+                btnPlayNow: "JOACĂ ACUM",
+                btnOpenShop: "🛒 MAGAZIN",
+                shopTitle: "MAGAZIN",
+                tabSkins: "Skin-uri",
+                tabAuras: "Aure Speciale",
+                btnCloseShop: "ÎNAPOI",
+                optTitle: "CONFIGURARE",
+                modeLabel: "MOD DE JOC",
+                skillChoiceLabel: "ABILITATE SPECIALĂ",
+                diffLabel: "DIFICULTATE",
+                volLabel: "Volum Sunet",
+                btnStartGame: "START JOC",
+                btnBackToMain: "ÎNAPOI",
+                scoreText: "Mărime",
+                recordText: "Record",
+                pauseTitle: "JOCUL ESTE PE PAUZĂ",
+                btnResume: "CONTINUĂ JOCUL",
+                btnQuitToMenu: "MENIU PRINCIPAL",
+                winTitle: "VICTORIE!",
+                winSub: "Ai supraviețuit și ai dominat harta!",
+                loseTitle: "GAME OVER",
+                loseSub: "Ai fost devorat sau prins!",
+                btnRestart: "REÎNCEARCĂ",
+                ownedText: "Deținut",
+                equippedText: "Echipat"
+            },
+            en: {
+                mainTitle: "NEON DEVORATOR",
+                langLabel: "LANGUAGE",
+                btnPlayNow: "PLAY NOW",
+                btnOpenShop: "🛒 SHOP",
+                shopTitle: "SHOP",
+                tabSkins: "Skins",
+                tabAuras: "Special Auras",
+                btnCloseShop: "BACK",
+                optTitle: "SETTINGS",
+                modeLabel: "GAME MODE",
+                skillChoiceLabel: "SPECIAL SKILL",
+                diffLabel: "DIFFICULTY",
+                volLabel: "Sound Volume",
+                btnStartGame: "START GAME",
+                btnBackToMain: "BACK",
+                scoreText: "Size",
+                recordText: "Record",
+                pauseTitle: "GAME PAUSED",
+                btnResume: "RESUME GAME",
+                btnQuitToMenu: "MAIN MENU",
+                winTitle: "VICTORY!",
+                winSub: "You survived and dominated the map!",
+                loseTitle: "GAME OVER",
+                loseSub: "You got eaten or caught!",
+                btnRestart: "PLAY AGAIN",
+                ownedText: "Owned",
+                equippedText: "Equipped"
+            },
+            es: {
+                mainTitle: "NEON DEVORATOR",
+                langLabel: "IDIOMA",
+                btnPlayNow: "JUGAR AHORA",
+                btnOpenShop: "🛒 TIENDA",
+                shopTitle: "TIENDA",
+                tabSkins: "Skins",
+                tabAuras: "Auras Especiales",
+                btnCloseShop: "ATRÁS",
+                optTitle: "AJUSTES",
+                modeLabel: "MODO DE JUEGO",
+                skillChoiceLabel: "HABILIDAD ESPECIAL",
+                diffLabel: "DIFICULTAD",
+                volLabel: "Volumen de Sonido",
+                btnStartGame: "INICIAR JUEGO",
+                btnBackToMain: "ATRÁS",
+                scoreText: "Tamaño",
+                recordText: "Récord",
+                pauseTitle: "JUEGO PAUSADO",
+                btnResume: "CONTINUAR",
+                btnQuitToMenu: "MENÚ PRINCIPAL",
+                winTitle: "¡VICTORIA!",
+                winSub: "¡Sobreviviste y dominaste el mapa!",
+                loseTitle: "GAME OVER",
+                loseSub: "¡Fuiste devorado o atrapado!",
+                btnRestart: "JUGAR DE NUEVO",
+                ownedText: "Adquirido",
+                equippedText: "Equipado"
+            }
+        };
+
+        function updateTexts() {
+            let t = translations[currentLang];
+            document.getElementById('mainTitle').innerText = t.mainTitle;
+            document.getElementById('langLabel').innerText = t.langLabel;
+            document.getElementById('btnPlayNow').innerText = t.btnPlayNow;
+            document.getElementById('btnOpenShop').innerText = t.btnOpenShop;
+            document.getElementById('shopTitle').innerText = t.shopTitle;
+            document.getElementById('tabSkins').innerText = t.tabSkins;
+            document.getElementById('tabAuras').innerText = t.tabAuras;
+            document.getElementById('btnCloseShop').innerText = t.btnCloseShop;
+            document.getElementById('optTitle').innerText = t.optTitle;
+            document.getElementById('modeLabel').innerText = t.modeLabel;
+            document.getElementById('skillChoiceLabel').innerText = t.skillChoiceLabel;
+            document.getElementById('diffLabel').innerText = t.diffLabel;
+            document.getElementById('volLabel').innerText = `${t.volLabel}: ${Math.round(audioVolume * 100)}%`;
+            document.getElementById('btnStartGame').innerText = t.btnStartGame;
+            document.getElementById('btnBackToMain').innerText = t.btnBackToMain;
+            document.getElementById('uiScoreText').innerText = t.scoreText;
+            document.getElementById('uiRecordText').innerText = t.recordText;
+            document.getElementById('pauseTitle').innerText = t.pauseTitle;
+            document.getElementById('btnResume').innerText = t.btnResume;
+            document.getElementById('btnQuitToMenu').innerText = t.btnQuitToMenu;
+            document.getElementById('btnRestart').innerText = t.btnRestart;
+            
+            renderShop();
+        }
 
         function renderShop() {
             let grid = document.getElementById('shopGrid');
             grid.innerHTML = '';
             let items = shopData[activeShopTab];
+            let t = translations[currentLang];
 
             items.forEach(item => {
                 let isSelected = false;
                 if (activeShopTab === 'skins') isSelected = (playerSkin === item.id);
                 if (activeShopTab === 'auras') isSelected = (playerAuraColor === item.id);
 
+                let itemName = typeof item.name === 'object' ? item.name[currentLang] : item.name;
+
                 let div = document.createElement('div');
                 div.className = `shop-item ${item.owned ? 'owned' : ''} ${isSelected ? 'selected' : ''}`;
                 div.innerHTML = `
-                    <h3 style="color:${item.id.startsWith('#') ? item.id : '#ff3'}">${item.name}</h3>
-                    <p>${item.owned ? (isSelected ? 'Echipat' : 'Deținut') : '🪙 ' + item.price}</p>
+                    <h3 style="color:${item.id.startsWith('#') ? item.id : '#ff3'}">${itemName}</h3>
+                    <p>${item.owned ? (isSelected ? t.equippedText : t.ownedText) : '🪙 ' + item.price}</p>
                 `;
                 div.addEventListener('click', () => {
                     if (item.owned) {
@@ -555,83 +675,6 @@
                 radius: Math.random() * 15 + 5,
                 color: ['#4af', '#3f9', '#f36', '#ff0', '#f0f'][Math.floor(Math.random() * 5)]
             });
-        }
-
-        const translations = {
-            ro: {
-                mainTitle: "NEON DEVORATOR",
-                langLabel: "LIMBĂ / LANGUAGE",
-                btnPlayNow: "JOACĂ ACUM",
-                btnOpenShop: "🛒 MAGAZIN",
-                optTitle: "CONFIGURARE",
-                modeLabel: "MOD DE JOC",
-                skillChoiceLabel: "ABILITATE SPECIALĂ",
-                diffLabel: "DIFICULTATE",
-                volLabel: "Volum Sunet",
-                btnStartGame: "START JOC",
-                scoreText: "Mărime",
-                recordText: "Record",
-                winTitle: "VICTORIE!",
-                winSub: "Ai supraviețuit și ai dominat harta!",
-                loseTitle: "GAME OVER",
-                loseSub: "Ai fost devorat sau prins!",
-                btnRestart: "REÎNCEARCĂ"
-            },
-            en: {
-                mainTitle: "NEON DEVORATOR",
-                langLabel: "LANGUAGE",
-                btnPlayNow: "PLAY NOW",
-                btnOpenShop: "🛒 SHOP",
-                optTitle: "SETTINGS",
-                modeLabel: "GAME MODE",
-                skillChoiceLabel: "SPECIAL SKILL",
-                diffLabel: "DIFFICULTY",
-                volLabel: "Sound Volume",
-                btnStartGame: "START GAME",
-                scoreText: "Size",
-                recordText: "Record",
-                winTitle: "VICTORY!",
-                winSub: "You survived and dominated the map!",
-                loseTitle: "GAME OVER",
-                loseSub: "You got eaten or caught!",
-                btnRestart: "PLAY AGAIN"
-            },
-            es: {
-                mainTitle: "NEON DEVORATOR",
-                langLabel: "IDIOMA",
-                btnPlayNow: "JUGAR AHORA",
-                btnOpenShop: "🛒 TIENDA",
-                optTitle: "AJUSTES",
-                modeLabel: "MODO DE JUEGO",
-                skillChoiceLabel: "HABILIDAD ESPECIAL",
-                diffLabel: "DIFICULTAD",
-                volLabel: "Volumen de Sonido",
-                btnStartGame: "INICIAR JUEGO",
-                scoreText: "Tamaño",
-                recordText: "Récord",
-                winTitle: "¡VICTORIA!",
-                winSub: "¡Sobreviviste y dominaste el mapa!",
-                loseTitle: "GAME OVER",
-                loseSub: "¡Fuiste devorado o atrapado!",
-                btnRestart: "JUGAR DE NUEVO"
-            }
-        };
-
-        function updateTexts() {
-            let t = translations[currentLang];
-            document.getElementById('mainTitle').innerText = t.mainTitle;
-            document.getElementById('langLabel').innerText = t.langLabel;
-            document.getElementById('btnPlayNow').innerText = t.btnPlayNow;
-            document.getElementById('btnOpenShop').innerText = t.btnOpenShop;
-            document.getElementById('optTitle').innerText = t.optTitle;
-            document.getElementById('modeLabel').innerText = t.modeLabel;
-            document.getElementById('skillChoiceLabel').innerText = t.skillChoiceLabel;
-            document.getElementById('diffLabel').innerText = t.diffLabel;
-            document.getElementById('volLabel').innerText = `${t.volLabel}: ${Math.round(audioVolume * 100)}%`;
-            document.getElementById('btnStartGame').innerText = t.btnStartGame;
-            document.getElementById('uiScoreText').innerText = t.scoreText;
-            document.getElementById('uiRecordText').innerText = t.recordText;
-            document.getElementById('btnRestart').innerText = t.btnRestart;
         }
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -993,14 +1036,12 @@
                 player.y = Math.max(player.radius, Math.min(MAP_SIZE - player.radius, nextY));
             }
 
-            // Dâra originală din spatele jucătorului
             player.trail.push({ x: player.x, y: player.y, radius: player.radius, alpha: 0.6 });
             if (player.trail.length > 8) player.trail.shift();
 
             ctx.fillStyle = '#05050f';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Randare dâră originală
             player.trail.forEach(t => {
                 t.alpha -= 0.05;
                 if (t.alpha > 0) {
@@ -1013,7 +1054,6 @@
                 }
             });
 
-            // Labirint Pac-Man
             if (selectedMode === 'pacman') {
                 ctx.strokeStyle = '#f0f';
                 ctx.lineWidth = 4;
@@ -1025,7 +1065,6 @@
                 ctx.shadowBlur = 0;
             }
 
-            // Mâncare
             food.forEach((f, index) => {
                 let screenX = f.x - player.x + canvas.width / 2;
                 let screenY = f.y - player.y + canvas.height / 2;
@@ -1045,7 +1084,6 @@
                 ctx.fill();
             });
 
-            // Boți normali
             if (selectedMode !== 'pacman' && selectedMode !== 'boss') {
                 bots.forEach((b, index) => {
                     b.x += b.vx;
@@ -1069,7 +1107,7 @@
                         } else if (b.radius > player.radius * 1.05) {
                             gameRunning = false;
                             document.getElementById('gameOverTitle').innerText = translations[currentLang].loseTitle;
-                            document.getElementById('gameOverSub').innerText = "Ai fost mâncat de un bot mai mare!";
+                            document.getElementById('gameOverSub').innerText = translations[currentLang].loseSub;
                             document.getElementById('screen-gameover').classList.remove('hidden');
                         }
                     }
@@ -1087,7 +1125,6 @@
                 });
             }
 
-            // Gardieni în mod Pacman
             if (selectedMode === 'pacman') {
                 pacmanGuards.forEach(g => {
                     let angle = Math.atan2(player.y - g.y, player.x - g.x);
@@ -1110,13 +1147,12 @@
                     if (Math.hypot(player.x - g.x, player.y - g.y) < player.radius + g.radius) {
                         gameRunning = false;
                         document.getElementById('gameOverTitle').innerText = translations[currentLang].loseTitle;
-                        document.getElementById('gameOverSub').innerText = "Ai fost prins de gardianul roșu!";
+                        document.getElementById('gameOverSub').innerText = translations[currentLang].loseSub;
                         document.getElementById('screen-gameover').classList.remove('hidden');
                     }
                 });
             }
 
-            // Aură personalizată
             if (activeSkillTimer > 0 && playerAuraColor !== 'none') {
                 ctx.beginPath();
                 ctx.arc(canvas.width / 2, canvas.height / 2, player.radius + 12, 0, Math.PI * 2);
@@ -1128,7 +1164,6 @@
                 ctx.shadowBlur = 0;
             }
 
-            // Jucător
             ctx.beginPath();
             ctx.arc(canvas.width / 2, canvas.height / 2, player.radius, 0, Math.PI * 2);
             ctx.fillStyle = player.color;
@@ -1139,7 +1174,6 @@
 
             drawEyes(canvas.width / 2, canvas.height / 2, player.radius, player.angle || 0);
 
-            // Minimap
             mCtx.fillStyle = '#05050f';
             mCtx.fillRect(0, 0, minimapCanvas.width, minimapCanvas.height);
             let scaleM = minimapCanvas.width / MAP_SIZE;
