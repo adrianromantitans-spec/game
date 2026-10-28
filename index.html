@@ -314,13 +314,13 @@
         </div>
 
         <button id="btnPlayNow" class="menu-btn btn-primary">JOACĂ ACUM</button>
-        <button id="btnOpenShop" class="menu-btn" style="border-color:#ff3; color:#ff3;">🛒 PERSONALIZARE & AURE</button>
+        <button id="btnOpenShop" class="menu-btn" style="border-color:#ff3; color:#ff3;">🛒 MAG. SKIN-URI & AURE</button>
     </div>
 
-    <!-- 2. Magazin & Personalizare Particule / Aure -->
+    <!-- 2. Magazin de Skin-uri și Personalizare Particule / Aure -->
     <div id="screen-shop" class="menu-overlay hidden">
-        <h1 style="color:#ff3; text-shadow: 0 0 20px #ff3;">PERSONALIZARE</h1>
-        <p style="font-size:12px; color:#aaa; margin-bottom:15px;">Alege stilul de particule și aura ta specială!</p>
+        <h1 style="color:#ff3; text-shadow: 0 0 20px #ff3;">MAGAZIN & PERSONALIZARE</h1>
+        <p style="font-size:12px; color:#aaa; margin-bottom:15px;">Alege skin-ul, particulele și aura ta specială!</p>
         <div class="shop-grid" id="shopGrid"></div>
         <button id="btnCloseShop" class="menu-btn btn-primary">ÎNAPOI</button>
     </div>
@@ -331,11 +331,11 @@
 
         <div style="font-size:11px; color:#aaa; margin-bottom:2px;" id="modeLabel">MOD DE JOC</div>
         <div style="display:flex; gap:4px; margin-bottom:6px; flex-wrap:wrap; justify-content:center;">
-            <button class="menu-btn mode-btn active" data-mode="classic" style="width:68px; padding:5px 0; font-size:10px;">Classic</button>
-            <button class="menu-btn mode-btn" data-mode="survival" style="width:68px; padding:5px 0; font-size:10px;">Survival</button>
-            <button class="menu-btn mode-btn" data-mode="boss" style="width:68px; padding:5px 0; font-size:10px;">Boss</button>
-            <button class="menu-btn mode-btn" data-mode="pacman" style="width:68px; padding:5px 0; font-size:10px; border-color:#f0f; color:#f0f;">Pac-Cyber</button>
-            <button class="menu-btn mode-btn" data-mode="pvp" style="width:68px; padding:5px 0; font-size:10px;">PvP 2P</button>
+            <button class="menu-btn mode-btn active" data-mode="classic" style="width:70px; padding:5px 0; font-size:10px;">Classic</button>
+            <button class="menu-btn mode-btn" data-mode="survival" style="width:70px; padding:5px 0; font-size:10px;">Survival</button>
+            <button class="menu-btn mode-btn" data-mode="boss" style="width:70px; padding:5px 0; font-size:10px;">Boss</button>
+            <button class="menu-btn mode-btn" data-mode="pacman" style="width:70px; padding:5px 0; font-size:10px; border-color:#f0f; color:#f0f;">Pac-Cyber</button>
+            <button class="menu-btn mode-btn" data-mode="pvp" style="width:70px; padding:5px 0; font-size:10px;">PvP 2P</button>
         </div>
 
         <div style="font-size:11px; color:#aaa; margin-bottom:2px;" id="skillChoiceLabel">ABILITATE SPECIALĂ</div>
@@ -400,29 +400,33 @@
         let neonCoins = parseInt(localStorage.getItem('nd_coins')) || 0;
         document.getElementById('coinsVal').innerText = neonCoins;
 
-        let customData = [
-            { id: 'lightning', type: 'particle', name: 'Fulgere ⚡', price: 0, owned: true, desc: 'Lasă fulgere neon' },
-            { id: 'stars', type: 'particle', name: 'Steluțe ⭐', price: 50, owned: localStorage.getItem('cust_stars') === 'true', desc: 'Lasă steluțe sclipitoare' },
-            { id: 'hearts', type: 'particle', name: 'Inimi ❤️', price: 80, owned: localStorage.getItem('cust_hearts') === 'true', desc: 'Lasă inimioare în urmă' },
-            { id: 'matrix', type: 'particle', name: 'Matrix 🟩', price: 120, owned: localStorage.getItem('cust_matrix') === 'true', desc: 'Lasă cod digital' },
-            { id: '#4af', type: 'aura', name: 'Aura Albastră', price: 0, owned: true, desc: 'Aura clasică neon' },
-            { id: '#ff0055', type: 'aura', name: 'Aura Cyber Roșie', price: 100, owned: localStorage.getItem('cust_aurared') === 'true', desc: 'Aură agresivă roșie' },
-            { id: '#00ffcc', type: 'aura', name: 'Aura Cyan Matrix', price: 150, owned: localStorage.getItem('cust_auracyan') === 'true', desc: 'Aură cibernetică cyan' }
+        let shopItems = [
+            { id: '#4af', type: 'skin', name: 'Neon Blue', price: 0, owned: true },
+            { id: 'rainbow', type: 'skin', name: 'Rainbow', price: 0, owned: true },
+            { id: 'pulse', type: 'skin', name: 'Pulsator', price: 50, owned: localStorage.getItem('skin_pulse') === 'true' },
+            { id: 'matrix', type: 'skin', name: 'Matrix', price: 100, owned: localStorage.getItem('skin_matrix') === 'true' },
+            { id: 'lightning', type: 'particle', name: 'Fulgere ⚡', price: 0, owned: true },
+            { id: 'stars', type: 'particle', name: 'Steluțe ⭐', price: 50, owned: localStorage.getItem('cust_stars') === 'true' },
+            { id: 'hearts', type: 'particle', name: 'Inimi ❤️', price: 80, owned: localStorage.getItem('cust_hearts') === 'true' },
+            { id: '#ff0055', type: 'aura', name: 'Aura Roșie', price: 100, owned: localStorage.getItem('cust_aurared') === 'true' }
         ];
 
         function renderShop() {
             let grid = document.getElementById('shopGrid');
             grid.innerHTML = '';
-            customData.forEach(item => {
-                let isSelected = (item.type === 'particle' && playerParticleType === item.id) || (item.type === 'aura' && playerAuraColor === item.id);
+            shopItems.forEach(item => {
+                let isSelected = (item.type === 'skin' && playerSkin === item.id) || 
+                                 (item.type === 'particle' && playerParticleType === item.id) || 
+                                 (item.type === 'aura' && playerAuraColor === item.id);
                 let div = document.createElement('div');
                 div.className = `shop-item ${item.owned ? 'owned' : ''} ${isSelected ? 'selected' : ''}`;
                 div.innerHTML = `
-                    <h3 style="color:${item.type === 'aura' ? item.id : '#4af'}">${item.name}</h3>
+                    <h3 style="color:${item.type === 'aura' ? item.id : '#ff3'}">${item.name}</h3>
                     <p>${item.owned ? (isSelected ? 'Echipat' : 'Deținut') : '🪙 ' + item.price}</p>
                 `;
                 div.addEventListener('click', () => {
                     if (item.owned) {
+                        if (item.type === 'skin') { playerSkin = item.id; player.color = playerSkin; }
                         if (item.type === 'particle') playerParticleType = item.id;
                         if (item.type === 'aura') playerAuraColor = item.id;
                         renderShop();
@@ -433,6 +437,7 @@
                             document.getElementById('coinsVal').innerText = neonCoins;
                             item.owned = true;
                             localStorage.setItem('cust_' + item.id.replace('#',''), 'true');
+                            if (item.type === 'skin') { playerSkin = item.id; player.color = playerSkin; }
                             if (item.type === 'particle') playerParticleType = item.id;
                             if (item.type === 'aura') playerAuraColor = item.id;
                             renderShop();
@@ -486,6 +491,7 @@
         let skillCooldown = 0;
         const MAX_SKILL_COOLDOWN = 600;
         let activeSkillTimer = 0;
+        let spawnProtection = 0; // Protecție la spawn pentru boți
 
         let player = {
             x: 150, y: 150,
@@ -505,6 +511,7 @@
         let food = [];
         let powerups = [];
         let traps = [];
+        let blackHoles = [];
         let labirinthWalls = [];
         let particles = [];
 
@@ -525,7 +532,7 @@
                 mainTitle: "NEON DEVORATOR",
                 langLabel: "LIMBĂ / LANGUAGE",
                 btnPlayNow: "JOACĂ ACUM",
-                btnOpenShop: "🛒 PERSONALIZARE & AURE",
+                btnOpenShop: "🛒 MAG. SKIN-URI & AURE",
                 optTitle: "CONFIGURARE",
                 modeLabel: "MOD DE JOC",
                 skillChoiceLabel: "ABILITATE SPECIALĂ",
@@ -544,7 +551,7 @@
                 mainTitle: "NEON DEVORATOR",
                 langLabel: "LANGUAGE",
                 btnPlayNow: "PLAY NOW",
-                btnOpenShop: "🛒 CUSTOMIZATION",
+                btnOpenShop: "🛒 SKINS & CUSTOMIZATION",
                 optTitle: "SETTINGS",
                 modeLabel: "GAME MODE",
                 skillChoiceLabel: "SPECIAL SKILL",
@@ -563,7 +570,7 @@
                 mainTitle: "NEON DEVORATOR",
                 langLabel: "IDIOMA",
                 btnPlayNow: "JUGAR AHORA",
-                btnOpenShop: "🛒 PERSONALIZACIÓN",
+                btnOpenShop: "🛒 TIENDA Y PERSONALIZACIÓN",
                 optTitle: "AJUSTES",
                 modeLabel: "MODO DE JUEGO",
                 skillChoiceLabel: "HABILIDAD ESPECIAL",
@@ -639,13 +646,13 @@
         }
 
         function initEntities() {
-            bots = []; pacmanGuards = []; bossBot = null; food = []; powerups = []; traps = []; labirinthWalls = []; particles = [];
+            bots = []; pacmanGuards = []; bossBot = null; food = []; powerups = []; traps = []; blackHoles = []; labirinthWalls = []; particles = [];
             MAP_SIZE = selectedMode === 'survival' ? 2500 : (selectedMode === 'pacman' ? 2000 : 3000);
+            spawnProtection = 180; // 3 secunde de imunitate la începutul meciului unde boții te ignoră
 
             let speedMult = selectedDifficulty === 'easy' ? 1.5 : (selectedDifficulty === 'mid' ? 2.5 : 4.0);
 
             if (selectedMode === 'pacman') {
-                // Generare labirint procedural simplificat (pereți verticali și orizontali)
                 for (let i = 0; i < 18; i++) {
                     labirinthWalls.push({
                         x: (i * 350) % MAP_SIZE + 100,
@@ -654,7 +661,6 @@
                         h: i % 2 === 0 ? 40 : 250
                     });
                 }
-                // 3 Gardieni Roșii implacabili
                 for (let i = 0; i < 3; i++) {
                     pacmanGuards.push({
                         x: Math.random() * (MAP_SIZE - 400) + 200,
@@ -662,7 +668,6 @@
                         radius: 20, speed: 2.2 + (i * 0.4)
                     });
                 }
-                // Puncte neon de adunat în labirint
                 for (let i = 0; i < 120; i++) {
                     food.push({
                         x: Math.random() * (MAP_SIZE - 100) + 50,
@@ -684,7 +689,8 @@
                         radius: bRadius,
                         vx: (Math.random() - 0.5) * speedMult,
                         vy: (Math.random() - 0.5) * speedMult,
-                        baseSpeed: speedMult
+                        baseSpeed: speedMult,
+                        color: ['#f36', '#ff3', '#0ff', '#f90'][Math.floor(Math.random() * 4)]
                     });
                 }
             }
@@ -932,6 +938,7 @@
             if (skillCooldown > 0) skillCooldown--;
             if (activeSkillTimer > 0) activeSkillTimer--;
             if (freezeTimer > 0) freezeTimer--;
+            if (spawnProtection > 0) spawnProtection--;
 
             let dashPct = (dashCooldown / MAX_DASH_COOLDOWN) * 182.2;
             document.getElementById('dashProgress').style.strokeDashoffset = dashPct;
@@ -955,7 +962,6 @@
             if (keys['a'] || keys['arrowleft']) nextX -= player.speed;
             if (keys['d'] || keys['arrowright']) nextX += player.speed;
 
-            // Coliziune cu pereții în modul Pacman
             let canMove = true;
             if (selectedMode === 'pacman') {
                 for (let w of labirinthWalls) {
@@ -977,7 +983,7 @@
             ctx.fillStyle = '#05050f';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Desenează pereții labirintului în modul Pac-Man
+            // Randare perechi labirint Pac-Man
             if (selectedMode === 'pacman') {
                 ctx.strokeStyle = '#f0f';
                 ctx.lineWidth = 4;
@@ -989,7 +995,7 @@
                 ctx.shadowBlur = 0;
             }
 
-            // Desenează mâncarea
+            // Mâncare clasică / Pacman
             food.forEach((f, index) => {
                 let screenX = f.x - player.x + canvas.width / 2;
                 let screenY = f.y - player.y + canvas.height / 2;
@@ -1009,7 +1015,48 @@
                 ctx.fill();
             });
 
-            // Logică Gardieni în modul Pac-Man
+            // Logică Boți normali (cu verificare să nu te atace instant dacă ești mic sau sub protecție)
+            if (selectedMode !== 'pacman' && selectedMode !== 'boss') {
+                bots.forEach((b, index) => {
+                    b.x += b.vx;
+                    b.y += b.vy;
+
+                    if (b.x < b.radius || b.x > MAP_SIZE - b.radius) b.vx *= -1;
+                    if (b.y < b.radius || b.y > MAP_SIZE - b.radius) b.vy *= -1;
+
+                    // Boții nu te atacă agresiv dacă ai protecție la spawn sau dacă ești mai mare / ei sunt mici
+                    let distToPlayer = Math.hypot(player.x - b.x, player.y - b.y);
+                    if (spawnProtection === 0 && b.radius > player.radius * 1.1 && distToPlayer < 300) {
+                        let angle = Math.atan2(player.y - b.y, player.x - b.x);
+                        b.x += Math.cos(angle) * (b.baseSpeed * 0.5);
+                        b.y += Math.sin(angle) * (b.baseSpeed * 0.5);
+                    }
+
+                    // Coliziune cu jucătorul
+                    if (distToPlayer < player.radius + b.radius) {
+                        if (player.radius > b.radius * 1.05 && spawnProtection === 0) {
+                            player.radius += b.radius * 0.3;
+                            bots.splice(index, 1);
+                            playSound(1200, 'sine', 0.2);
+                        } else if (b.radius > player.radius * 1.05 && spawnProtection === 0) {
+                            gameRunning = false;
+                            document.getElementById('gameOverTitle').innerText = translations[currentLang].loseTitle;
+                            document.getElementById('gameOverSub').innerText = "Ai fost mâncat de un bot mai mare!";
+                            document.getElementById('screen-gameover').classList.remove('hidden');
+                        }
+                    }
+
+                    let bScreenX = b.x - player.x + canvas.width / 2;
+                    let bScreenY = b.y - player.y + canvas.height / 2;
+
+                    ctx.beginPath();
+                    ctx.arc(bScreenX, bScreenY, b.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = b.color;
+                    ctx.fill();
+                });
+            }
+
+            // Gardieni în mod Pacman
             if (selectedMode === 'pacman') {
                 pacmanGuards.forEach(g => {
                     let angle = Math.atan2(player.y - g.y, player.x - g.x);
@@ -1027,8 +1074,7 @@
                     ctx.fill();
                     ctx.shadowBlur = 0;
 
-                    // Dacă gardianul te prinde
-                    if (Math.hypot(player.x - g.x, player.y - g.y) < player.radius + g.radius) {
+                    if (Math.hypot(player.x - g.x, player.y - g.y) < player.radius + g.radius && spawnProtection === 0) {
                         gameRunning = false;
                         document.getElementById('gameOverTitle').innerText = translations[currentLang].loseTitle;
                         document.getElementById('gameOverSub').innerText = "Ai fost prins de gardianul roșu!";
@@ -1037,7 +1083,7 @@
                 });
             }
 
-            // Desenează particulele personalizate
+            // Particule custom
             particles.forEach((p, index) => {
                 p.life--;
                 if (p.life <= 0) particles.splice(index, 1);
@@ -1048,7 +1094,7 @@
                 ctx.fillText(p.symbol, pScreenX, pScreenY);
             });
 
-            // Desenează Jucătorul + Aura personalizată activă
+            // Aură personalizată
             if (activeSkillTimer > 0) {
                 ctx.beginPath();
                 ctx.arc(canvas.width / 2, canvas.height / 2, player.radius + 12, 0, Math.PI * 2);
@@ -1060,6 +1106,7 @@
                 ctx.shadowBlur = 0;
             }
 
+            // Jucător
             ctx.beginPath();
             ctx.arc(canvas.width / 2, canvas.height / 2, player.radius, 0, Math.PI * 2);
             ctx.fillStyle = player.color;
@@ -1068,7 +1115,7 @@
             ctx.fill();
             ctx.shadowBlur = 0;
 
-            // Desenează joystick vizual
+            // Joystick vizual
             if (joystick.active) {
                 ctx.beginPath();
                 ctx.arc(joystick.startX, joystick.startY, 40, 0, Math.PI * 2);
