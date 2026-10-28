@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Devorator - S24 Ultra Optimized</title>
+    <title>Neon Devorator - Ultimate Edition & Pause</title>
     <style>
         * {
             box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
-            touch-action: none; /* Previne zoom-ul și gesturile de sistem pe ecran */
         }
         body, html {
             margin: 0;
@@ -19,11 +18,13 @@
             background-color: #05050f;
             overflow: hidden;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overscroll-behavior: none;
         }
         canvas {
             display: block;
             width: 100%;
             height: 100%;
+            touch-action: none;
         }
         
         #ui-top {
@@ -114,20 +115,21 @@
             z-index: 20;
             cursor: pointer;
             backdrop-filter: blur(4px);
+            transition: background 0.2s;
             touch-action: none;
         }
         .action-btn:active {
-            transform: scale(0.92);
-            background: rgba(74, 175, 255, 0.4);
+            transform: scale(0.95);
         }
 
         #dashBtnWrapper {
             position: absolute;
-            bottom: 40px;
+            bottom: 50px;
             right: 20px;
-            width: 70px;
-            height: 70px;
+            width: 65px;
+            height: 65px;
             z-index: 20;
+            touch-action: none;
         }
         #dashBtn {
             width: 100%;
@@ -153,9 +155,9 @@
             z-index: 25;
         }
 
-        #skillBtn { bottom: 125px; right: 25px; width: 55px; height: 55px; border-color: #ff0; color: #ff0; }
-        #splitBtn { bottom: 195px; right: 40px; width: 55px; height: 55px; border-color: #3f9; color: #3f9; }
-        #freezeBtn { bottom: 40px; right: 105px; width: 55px; height: 55px; border-color: #0ff; color: #0ff; }
+        #skillBtn { bottom: 120px; right: 20px; width: 55px; height: 55px; border-color: #ff0; color: #ff0; }
+        #splitBtn { bottom: 190px; right: 35px; width: 55px; height: 55px; border-color: #3f9; color: #3f9; }
+        #freezeBtn { bottom: 50px; right: 95px; width: 55px; height: 55px; border-color: #0ff; color: #0ff; }
 
         .menu-overlay {
             position: absolute;
@@ -288,15 +290,15 @@
     </div>
 
     <div id="pauseBtn" class="action-btn">⏸️</div>
-    <div id="skillBtn" class="action-btn">⚡</div>
+    <div id="skillBtn" class="action-btn" title="Abilitate Specială">⚡</div>
     <div id="freezeBtn" class="action-btn">❄️</div>
     <div id="splitBtn" class="action-btn">✂️</div>
     
     <div id="dashBtnWrapper">
         <div id="dashBtn" class="action-btn">DASH</div>
-        <svg id="dashSvg" viewBox="0 0 70 70">
-            <circle cx="35" cy="35" r="31" stroke="rgba(255,255,255,0.2)" stroke-width="4" fill="none"/>
-            <circle id="dashProgress" cx="35" cy="35" r="31" stroke="#4af" stroke-width="4" fill="none" stroke-dasharray="194.7" stroke-dashoffset="0"/>
+        <svg id="dashSvg" viewBox="0 0 65 65">
+            <circle cx="32.5" cy="32.5" r="29" stroke="rgba(255,255,255,0.2)" stroke-width="4" fill="none"/>
+            <circle id="dashProgress" cx="32.5" cy="32.5" r="29" stroke="#4af" stroke-width="4" fill="none" stroke-dasharray="182.2" stroke-dashoffset="0"/>
         </svg>
     </div>
 
@@ -699,67 +701,65 @@
             });
         }
 
-        // SISTEM POINTER EVENTS ROBUST PENTRU S24 ULTRA (Elimină orice blocare a joystick-ului)
-        let joystick = { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, pointerId: null };
-        let joystick2 = { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, pointerId: null };
+        let joystick = { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, touchId: null };
+        let joystick2 = { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, touchId: null };
 
+        // Pointer Events for robust compatibility on Android / S24 Ultra
         window.addEventListener('pointerdown', (e) => {
             if (!gameRunning || isPaused) return;
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            
-            // Evităm butoanele din dreapta jos
-            if (e.clientX > window.innerWidth - 200 && e.clientY > window.innerHeight - 300) return;
+
+            if (e.clientX > window.innerWidth - 160 && e.clientY > window.innerHeight - 240) return;
 
             if (selectedMode === 'pvp') {
                 if (e.clientX < window.innerWidth / 2 && !joystick.active) {
                     joystick.active = true;
                     joystick.startX = e.clientX; joystick.startY = e.clientY;
                     joystick.currentX = e.clientX; joystick.currentY = e.clientY;
-                    joystick.pointerId = e.pointerId;
+                    joystick.touchId = e.pointerId;
                 } else if (e.clientX >= window.innerWidth / 2 && !joystick2.active) {
                     joystick2.active = true;
                     joystick2.startX = e.clientX; joystick2.startY = e.clientY;
                     joystick2.currentX = e.clientX; joystick2.currentY = e.clientY;
-                    joystick2.pointerId = e.pointerId;
+                    joystick2.touchId = e.pointerId;
                 }
             } else {
                 if (!joystick.active) {
                     joystick.active = true;
                     joystick.startX = e.clientX; joystick.startY = e.clientY;
                     joystick.currentX = e.clientX; joystick.currentY = e.clientY;
-                    joystick.pointerId = e.pointerId;
+                    joystick.touchId = e.pointerId;
                 }
             }
-        }, { passive: true });
+        });
 
         window.addEventListener('pointermove', (e) => {
             if (!gameRunning || isPaused) return;
-            if (e.pointerId === joystick.pointerId && joystick.active) {
+            if (e.pointerId === joystick.touchId) {
                 joystick.currentX = e.clientX; joystick.currentY = e.clientY;
             }
-            if (e.pointerId === joystick2.pointerId && joystick2.active) {
+            if (e.pointerId === joystick2.touchId) {
                 joystick2.currentX = e.clientX; joystick2.currentY = e.clientY;
             }
-        }, { passive: true });
+        });
 
-        const releasePointer = (e) => {
-            if (e.pointerId === joystick.pointerId) {
-                joystick.active = false; joystick.pointerId = null; player.vx = 0; player.vy = 0;
+        const resetJoystickPointer = (e) => {
+            if (e.pointerId === joystick.touchId) {
+                joystick.active = false; joystick.touchId = null; player.vx = 0; player.vy = 0;
             }
-            if (e.pointerId === joystick2.pointerId) {
-                joystick2.active = false; joystick2.pointerId = null; player2.vx = 0; player2.vy = 0;
+            if (e.pointerId === joystick2.touchId) {
+                joystick2.active = false; joystick2.touchId = null; player2.vx = 0; player2.vy = 0;
             }
         };
-
-        window.addEventListener('pointerup', releasePointer, { passive: true });
-        window.addEventListener('pointercancel', releasePointer, { passive: true });
+        window.addEventListener('pointerup', resetJoystickPointer);
+        window.addEventListener('pointercancel', resetJoystickPointer);
 
         let keys = {};
         window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
         window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
         document.getElementById('dashBtnWrapper').addEventListener('pointerdown', (e) => {
-            e.stopPropagation();
+            e.preventDefault();
             if (!isPaused && dashCooldown === 0) {
                 triggerDash();
                 dashCooldown = MAX_DASH_COOLDOWN;
@@ -767,7 +767,7 @@
         });
 
         document.getElementById('splitBtn').addEventListener('pointerdown', (e) => {
-            e.stopPropagation();
+            e.preventDefault();
             if (!isPaused && player.radius > 25) {
                 player.radius -= 5;
                 player.speed = player.baseSpeed * 3.0;
@@ -778,7 +778,7 @@
         });
 
         document.getElementById('freezeBtn').addEventListener('pointerdown', (e) => {
-            e.stopPropagation();
+            e.preventDefault();
             if (!isPaused) {
                 freezeTimer = 180;
                 screenShake = 15;
@@ -787,7 +787,7 @@
         });
 
         document.getElementById('skillBtn').addEventListener('pointerdown', (e) => {
-            e.stopPropagation();
+            e.preventDefault();
             if (!isPaused && skillCooldown === 0) {
                 activeSkillTimer = 300;
                 skillCooldown = MAX_SKILL_COOLDOWN;
@@ -797,7 +797,7 @@
         });
 
         document.getElementById('pauseBtn').addEventListener('pointerdown', (e) => {
-            e.stopPropagation();
+            e.preventDefault();
             if (gameRunning) {
                 isPaused = true;
                 document.getElementById('screen-pause').classList.remove('hidden');
@@ -810,27 +810,23 @@
         });
 
         document.getElementById('btnQuitToMenu').addEventListener('click', () => {
-            gameRunning = false;
             isPaused = false;
+            gameRunning = false;
             document.getElementById('screen-pause').classList.add('hidden');
+            document.getElementById('screen-gameover').classList.add('hidden');
             document.getElementById('screen-main').classList.remove('hidden');
         });
 
         function triggerDash() {
-            if (player.isDashing || !gameRunning) return;
-            player.isDashing = true;
             player.speed = player.baseSpeed * 2.5;
-            playSound(400, 'triangle', 0.15);
-            setTimeout(() => { player.speed = player.baseSpeed; player.isDashing = false; }, 300);
+            screenShake = 8;
+            playSound(600, 'square', 0.15);
+            setTimeout(() => { player.speed = player.baseSpeed; }, 300);
         }
 
-        document.querySelectorAll('.lang-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                currentLang = e.target.getAttribute('data-lang');
-                updateTexts();
-            });
+        document.getElementById('btnPlayNow').addEventListener('click', () => {
+            document.getElementById('screen-main').classList.add('hidden');
+            document.getElementById('screen-options').classList.remove('hidden');
         });
 
         document.getElementById('btnOpenShop').addEventListener('click', () => {
@@ -849,17 +845,23 @@
             document.getElementById('screen-main').classList.remove('hidden');
         });
 
-        document.querySelectorAll('.skill-choice-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.skill-choice-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                selectedSkill = e.target.getAttribute('data-skill');
-            });
+        document.getElementById('btnStartGame').addEventListener('click', () => {
+            document.getElementById('screen-options').classList.add('hidden');
+            startGame();
         });
 
-        document.getElementById('btnPlayNow').addEventListener('click', () => {
-            document.getElementById('screen-main').classList.add('hidden');
-            document.getElementById('screen-options').classList.remove('hidden');
+        document.getElementById('btnRestart').addEventListener('click', () => {
+            document.getElementById('screen-gameover').classList.add('hidden');
+            startGame();
+        });
+
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentLang = e.target.getAttribute('data-lang');
+                updateTexts();
+            });
         });
 
         document.querySelectorAll('.mode-btn').forEach(btn => {
@@ -868,6 +870,14 @@
                 e.target.classList.add('active');
                 selectedMode = e.target.getAttribute('data-mode');
                 updateRecordDisplay();
+            });
+        });
+
+        document.querySelectorAll('.skill-choice-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.skill-choice-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                selectedSkill = e.target.getAttribute('data-skill');
             });
         });
 
@@ -884,646 +894,111 @@
             updateTexts();
         });
 
-        document.getElementById('btnStartGame').addEventListener('click', () => {
+        function startGame() {
+            gameRunning = true;
+            isPaused = false;
+            player.x = MAP_SIZE / 2;
+            player.y = MAP_SIZE / 2;
+            player.radius = 15;
+            player.color = playerSkin;
+            initEntities();
             updateRecordDisplay();
-            startGame();
-        });
+        }
 
-        document.getElementById('btnRestart').addEventListener('click', () => {
-            document.getElementById('screen-gameover').classList.add('hidden');
-            document.getElementById('screen-options').classList.remove('hidden');
-        });
+        function gameLoop() {
+            animationFrame = requestAnimationFrame(gameLoop);
 
-        function update() {
-            if (isPaused || !gameRunning) return;
-
-            if (MAP_SIZE > 1200) {
-                MAP_SIZE -= selectedMode === 'survival' ? 0.2 : 0.1;
-                if (MAP_SIZE <= 1300) {
-                    triggerAchievement('survivor', 'Supraviețuitorul: Ai rezistat în zona mică!');
-                }
-            }
-
-            if (screenShake > 0) screenShake--;
-            if (freezeTimer > 0) freezeTimer--;
-            if (magnetTimer > 0) magnetTimer--;
-            if (spawnProtectionTimer > 0) spawnProtectionTimer--;
-            if (activeSkillTimer > 0) activeSkillTimer--;
-
-            if (dashCooldown > 0) {
-                dashCooldown--;
-                let progressOffset = 194.7 * (dashCooldown / MAX_DASH_COOLDOWN);
-                document.getElementById('dashProgress').style.strokeDashoffset = progressOffset;
-                document.getElementById('dashBtn').style.opacity = '0.4';
-            } else {
-                document.getElementById('dashProgress').style.strokeDashoffset = '0';
-                document.getElementById('dashBtn').style.opacity = '1';
-            }
-
-            if (skillCooldown > 0) skillCooldown--;
-
-            if (Math.random() < 0.003 && meteors.length < 2) {
-                meteors.push({
-                    x: Math.random() * MAP_SIZE,
-                    y: Math.random() * MAP_SIZE,
-                    radius: 50, timer: 90
+            if (!gameRunning) {
+                ctx.fillStyle = '#05050f';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                menuBalls.forEach(b => {
+                    b.x += b.vx; b.y += b.vy;
+                    if (b.x < 0 || b.x > canvas.width) b.vx *= -1;
+                    if (b.y < 0 || b.y > canvas.height) b.vy *= -1;
+                    ctx.beginPath();
+                    ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = b.color;
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = b.color;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
                 });
+                return;
             }
 
-            for (let i = meteors.length - 1; i >= 0; i--) {
-                let m = meteors[i];
-                m.timer--;
-                if (m.timer <= 0) {
-                    screenShake = 15;
-                    playSound(100, 'sawtooth', 0.3);
-                    for(let k=0; k<10; k++) {
-                        food.push({
-                            x: m.x + (Math.random() - 0.5) * 80,
-                            y: m.y + (Math.random() - 0.5) * 80,
-                            radius: 5, color: '#ff3333'
-                        });
-                    }
-                    meteors.splice(i, 1);
-                }
-            }
+            if (isPaused) return;
+
+            if (dashCooldown > 0) dashCooldown--;
+            if (skillCooldown > 0) skillCooldown--;
+            if (activeSkillTimer > 0) activeSkillTimer--;
+            if (freezeTimer > 0) freezeTimer--;
+
+            let dashPct = (dashCooldown / MAX_DASH_COOLDOWN) * 182.2;
+            document.getElementById('dashProgress').style.strokeDashoffset = dashPct;
 
             if (joystick.active) {
                 let dx = joystick.currentX - joystick.startX;
                 let dy = joystick.currentY - joystick.startY;
                 let dist = Math.hypot(dx, dy);
-                let maxDist = 50;
                 if (dist > 5) {
                     let angle = Math.atan2(dy, dx);
-                    let power = Math.min(dist, maxDist) / maxDist;
-                    player.vx = Math.cos(angle) * player.speed * power;
-                    player.vy = Math.sin(angle) * player.speed * power;
-                } else { player.vx = 0; player.vy = 0; }
-            } else {
-                player.vx = 0; player.vy = 0;
-                if (keys['w'] || keys['arrowup']) player.vy = -player.speed;
-                if (keys['s'] || keys['arrowdown']) player.vy = player.speed;
-                if (keys['a'] || keys['arrowleft']) player.vx = -player.speed;
-                if (keys['d'] || keys['arrowright']) player.vx = player.speed;
+                    player.x += Math.cos(angle) * player.speed;
+                    player.y += Math.sin(angle) * player.speed;
+                }
             }
 
-            let radiusBonus = 0;
-            if (selectedSkill === 'giant' && activeSkillTimer > 0) {
-                radiusBonus = player.radius * 0.5;
-            }
-            if (selectedSkill === 'blackhole' && activeSkillTimer > 0) {
-                food.forEach(f => {
-                    if (Math.hypot(player.x - f.x, player.y - f.y) < 350) {
-                        let ang = Math.atan2(player.y - f.y, player.x - f.x);
-                        f.x += Math.cos(ang) * 8;
-                        f.y += Math.sin(ang) * 8;
-                    }
-                });
-            }
+            if (keys['w'] || keys['arrowup']) player.y -= player.speed;
+            if (keys['s'] || keys['arrowdown']) player.y += player.speed;
+            if (keys['a'] || keys['arrowleft']) player.x -= player.speed;
+            if (keys['d'] || keys['arrowright']) player.x += player.speed;
 
-            player.x += player.vx; player.y += player.vy;
             player.x = Math.max(player.radius, Math.min(MAP_SIZE - player.radius, player.x));
             player.y = Math.max(player.radius, Math.min(MAP_SIZE - player.radius, player.y));
-            player.baseSpeed = Math.max(2, 5 - (player.radius / 80));
 
-            if (selectedMode === 'pvp') {
-                if (joystick2.active) {
-                    let dx = joystick2.currentX - joystick2.startX;
-                    let dy = joystick2.currentY - joystick2.startY;
-                    let dist = Math.hypot(dx, dy);
-                    let maxDist = 50;
-                    if (dist > 5) {
-                        let angle = Math.atan2(dy, dx);
-                        let power = Math.min(dist, maxDist) / maxDist;
-                        player2.vx = Math.cos(angle) * player2.speed * power;
-                        player2.vy = Math.sin(angle) * player2.speed * power;
-                    } else { player2.vx = 0; player2.vy = 0; }
-                } else {
-                    player2.vx = 0; player2.vy = 0;
-                    if (keys['i']) player2.vy = -player2.speed;
-                    if (keys['k']) player2.vy = player2.speed;
-                    if (keys['j']) player2.vx = -player2.speed;
-                    if (keys['l']) player2.vx = player2.speed;
-                }
-                player2.x += player2.vx; player2.y += player2.vy;
-                player2.x = Math.max(player2.radius, Math.min(MAP_SIZE - player2.radius, player2.x));
-                player2.y = Math.max(player2.radius, Math.min(MAP_SIZE - player2.radius, player2.y));
-                player2.baseSpeed = Math.max(2, 5 - (player2.radius / 80));
-
-                if (spawnProtectionTimer === 0) {
-                    let distP1P2 = Math.hypot(player.x - player2.x, player.y - player2.y);
-                    if (distP1P2 < (player.radius + radiusBonus) + player2.radius) {
-                        gameOver(false);
-                        return;
-                    }
-                }
-            }
-
-            if (player.vx !== 0 || player.vy !== 0) {
-                player.trail.push({x: player.x, y: player.y, radius: player.radius * 0.8});
-                if (player.trail.length > 12) player.trail.shift();
-            }
-
-            for (let i = particles.length - 1; i >= 0; i--) {
-                let p = particles[i];
-                p.x += p.vx; p.y += p.vy; p.life--;
-                if (p.life <= 0) particles.splice(i, 1);
-            }
-
-            for (let bh of blackHoles) {
-                if (Math.hypot(player.x - bh.x, player.y - bh.y) < bh.radius) {
-                    player.x = Math.random() * (MAP_SIZE - 400) + 200;
-                    player.y = Math.random() * (MAP_SIZE - 400) + 200;
-                    playSound(300, 'sine', 0.3);
-                }
-            }
-
-            for (let i = food.length - 1; i >= 0; i--) {
-                let f = food[i];
-                if (magnetTimer > 0) {
-                    let dToP = Math.hypot(player.x - f.x, player.y - f.y);
-                    if (dToP < 250) {
-                        let ang = Math.atan2(player.y - f.y, player.x - f.x);
-                        f.x += Math.cos(ang) * 6;
-                        f.y += Math.sin(ang) * 6;
-                    }
-                }
-
-                if (Math.hypot(player.x - f.x, player.y - f.y) < (player.radius + radiusBonus) + f.radius) {
-                    player.radius += 0.25;
-                    neonCoins++;
-                    localStorage.setItem('nd_coins', neonCoins);
-                    document.getElementById('coinsVal').innerText = neonCoins;
-                    food.splice(i, 1);
-                    food.push({
-                        x: Math.random() * (MAP_SIZE - 40) + 20,
-                        y: Math.random() * (MAP_SIZE - 40) + 20,
-                        radius: 4, color: Math.random() > 0.5 ? '#3f9' : '#fc3'
-                    });
-                }
-            }
-
-            for (let i = powerups.length - 1; i >= 0; i--) {
-                let p = powerups[i];
-                if (Math.hypot(player.x - p.x, player.y - p.y) < (player.radius + radiusBonus) + p.radius) {
-                    playSound(850, 'sine', 0.15);
-                    addParticles(p.x, p.y, p.color, 12);
-                    if (p.type === 'magenta') player.radius += 3.5;
-                    if (p.type === 'magnet') magnetTimer = 300;
-                    powerups.splice(i, 1);
-                    spawnPowerup();
-                }
-            }
-
-            for (let t of traps) {
-                if (spawnProtectionTimer === 0 && Math.hypot(player.x - t.x, player.y - t.y) < (player.radius + radiusBonus) + t.radius) {
-                    screenShake = 20;
-                    playSound(120, 'sawtooth', 0.5);
-                    gameOver(false);
-                    return;
-                }
-            }
-
-            if (selectedMode === 'boss' && bossBot) {
-                let angToP = Math.atan2(player.y - bossBot.y, player.x - bossBot.x);
-                bossBot.x += Math.cos(angToP) * bossBot.baseSpeed;
-                bossBot.y += Math.sin(angToP) * bossBot.baseSpeed;
-
-                let dBoss = Math.hypot(player.x - bossBot.x, player.y - bossBot.y);
-                if (dBoss < (player.radius + radiusBonus) + bossBot.radius) {
-                    if ((player.radius + radiusBonus) > bossBot.radius * 1.05) {
-                        gameOver(true);
-                        return;
-                    } else if (spawnProtectionTimer === 0) {
-                        gameOver(false);
-                        return;
-                    }
-                }
-            }
-
-            if (selectedMode !== 'pvp' && selectedMode !== 'boss') {
-                for (let i = bots.length - 1; i >= 0; i--) {
-                    let b = bots[i];
-
-                    if (Math.random() < 0.05 && b.radius < 120) {
-                        b.radius += 0.15;
-                    }
-
-                    if (freezeTimer === 0) {
-                        let distToPlayer = Math.hypot(player.x - b.x, player.y - b.y);
-                        if (distToPlayer < 350 && spawnProtectionTimer === 0) {
-                            let angleToPlayer = Math.atan2(player.y - b.y, player.x - b.x);
-                            if (b.radius > player.radius * 1.05) {
-                                b.vx = Math.cos(angleToPlayer) * b.baseSpeed * 1.35;
-                                b.vy = Math.sin(angleToPlayer) * b.baseSpeed * 1.35;
-                            } else if (player.radius > b.radius * 1.05) {
-                                b.vx = -Math.cos(angleToPlayer) * b.baseSpeed * 1.25;
-                                b.vy = -Math.sin(angleToPlayer) * b.baseSpeed * 1.25;
-                            }
-                        }
-                        b.x += b.vx; b.y += b.vy;
-                        if (b.x <= b.radius || b.x >= MAP_SIZE - b.radius) b.vx *= -1;
-                        if (b.y <= b.radius || b.y >= MAP_SIZE - b.radius) b.vy *= -1;
-                    }
-
-                    let distToPlayer = Math.hypot(player.x - b.x, player.y - b.y);
-                    let isGhostActive = (selectedSkill === 'ghost' && activeSkillTimer > 0);
-
-                    if (distToPlayer < (player.radius + radiusBonus) + b.radius) {
-                        if ((player.radius + radiusBonus) > b.radius * 1.05) {
-                            player.radius += b.radius * 0.2;
-                            runBotsEaten++;
-                            if (runBotsEaten >= 10) triggerAchievement('botHunter', 'Vânzătorul de boți: 10 boți mâncați!');
-                            playSound(600, 'sine', 0.1);
-                            addParticles(b.x, b.y, '#3f9', 15);
-                            screenShake = 8;
-                            bots.splice(i, 1);
-                            spawnSingleBot();
-                        } else if (b.radius > (player.radius + radiusBonus) * 1.05 && spawnProtectionTimer === 0 && !isGhostActive) {
-                            screenShake = 25;
-                            playSound(150, 'sawtooth', 0.4);
-                            gameOver(false);
-                            return;
-                        }
-                    }
-                }
-            }
-
-            let currentScore = Math.floor(player.radius);
-            if (currentScore >= 100) triggerAchievement('eliteSize', 'Mărime de Elită: Ai atins mărimea 100!');
-
-            document.getElementById('scoreVal').innerText = currentScore;
-            if (currentScore > records[selectedMode]) {
-                records[selectedMode] = currentScore;
-                localStorage.setItem('nd_rec_' + selectedMode, records[selectedMode]);
-                updateRecordDisplay();
-            }
-
-            if (player.radius >= 200 && selectedMode !== 'boss') gameOver(true);
-        }
-
-        function spawnSingleBot() {
-            let speedMult = selectedDifficulty === 'easy' ? 1.5 : (selectedDifficulty === 'mid' ? 2.5 : 4.0);
-            let bRadius = Math.random() > 0.4 ? (Math.random() * 25 + 10) : (Math.random() * 55 + 20);
-            bots.push({
-                x: Math.random() * (MAP_SIZE - 100) + 50,
-                y: Math.random() * (MAP_SIZE - 100) + 50,
-                radius: bRadius,
-                vx: (Math.random() - 0.5) * speedMult,
-                vy: (Math.random() - 0.5) * speedMult,
-                baseSpeed: speedMult
-            });
-        }
-
-        function drawBallFace(x, y, radius, vx, vy) {
-            ctx.save();
-            let angle = (vx !== 0 || vy !== 0) ? Math.atan2(vy, vx) : 0;
-            let eyeDist = radius * 0.35;
-            let eyeRadius = Math.max(3, radius * 0.2);
-            let pupilRadius = Math.max(1.5, eyeRadius * 0.5);
-
-            let leftEyeX = x + Math.cos(angle - 0.5) * eyeDist;
-            let leftEyeY = y + Math.sin(angle - 0.5) * eyeDist;
-            let rightEyeX = x + Math.cos(angle + 0.5) * eyeDist;
-            let rightEyeY = y + Math.sin(angle + 0.5) * eyeDist;
-
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.arc(leftEyeX, leftEyeY, eyeRadius, 0, Math.PI * 2);
-            ctx.arc(rightEyeX, rightEyeY, eyeRadius, 0, Math.PI * 2);
-            ctx.fill();
-
-            let pupilOffsetDist = eyeRadius * 0.3;
-            let pupilX = Math.cos(angle) * pupilOffsetDist;
-            let pupilY = Math.sin(angle) * pupilOffsetDist;
-
-            ctx.fillStyle = '#05050f';
-            ctx.beginPath();
-            ctx.arc(leftEyeX + pupilX, leftEyeY + pupilY, pupilRadius, 0, Math.PI * 2);
-            ctx.arc(rightEyeX + pupilX, rightEyeY + pupilY, pupilRadius, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.restore();
-        }
-
-        function draw() {
             ctx.fillStyle = '#05050f';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            ctx.save();
-            if (screenShake > 0) {
-                ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake);
-            }
-            ctx.translate(canvas.width / 2 - player.x, canvas.height / 2 - player.y);
-
-            ctx.strokeStyle = '#141432';
-            ctx.lineWidth = 2;
-            let gridSize = 100;
-            for (let x = 0; x <= MAP_SIZE; x += gridSize) {
-                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, MAP_SIZE); ctx.stroke();
-            }
-            for (let y = 0; y <= MAP_SIZE; y += gridSize) {
-                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(MAP_SIZE, y); ctx.stroke();
-            }
-
-            ctx.strokeStyle = '#f36';
-            ctx.lineWidth = 6;
-            ctx.shadowBlur = 18;
-            ctx.shadowColor = '#f36';
-            ctx.strokeRect(0, 0, MAP_SIZE, MAP_SIZE);
-            ctx.shadowBlur = 0;
-
-            meteors.forEach(m => {
-                ctx.strokeStyle = '#f00';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(m.x, m.y, m.radius * (m.timer / 90), 0, Math.PI * 2);
-                ctx.stroke();
-
-                ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
-                ctx.beginPath();
-                ctx.arc(m.x, m.y, m.radius, 0, Math.PI * 2);
-                ctx.fill();
-            });
-
-            blackHoles.forEach(bh => {
-                ctx.fillStyle = '#800080';
-                ctx.shadowBlur = 20;
-                ctx.shadowColor = '#f0f';
-                ctx.beginPath();
-                ctx.arc(bh.x, bh.y, bh.radius, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.shadowBlur = 0;
-            });
-
-            traps.forEach(t => {
-                ctx.fillStyle = '#ff3333';
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = '#f00';
-                ctx.beginPath();
-                ctx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.shadowBlur = 0;
-            });
-
             food.forEach(f => {
-                ctx.fillStyle = f.color;
-                ctx.shadowBlur = 6;
-                ctx.shadowColor = f.color;
                 ctx.beginPath();
                 ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
+                ctx.fillStyle = f.color;
                 ctx.fill();
             });
 
-            powerups.forEach(p => {
-                ctx.fillStyle = p.color;
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = p.color;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fill();
-            });
-
-            particles.forEach(p => {
-                ctx.fillStyle = p.color;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fill();
-            });
-
-            let pColor = player.color;
-            if (playerSkin === 'rainbow') {
-                pColor = `hsl(${Date.now() / 5 % 360}, 100%, 50%)`;
-            } else if (playerSkin === 'pulse') {
-                pColor = Math.floor(Date.now() / 200) % 2 === 0 ? '#f0f' : '#0ff';
-            } else if (playerSkin === 'matrix') {
-                pColor = '#3f9';
-            } else if (playerSkin === 'fireball') {
-                pColor = '#fa0';
-            }
-
-            player.trail.forEach((tr, index) => {
-                ctx.fillStyle = pColor;
-                ctx.globalAlpha = index / player.trail.length * 0.4;
-                ctx.beginPath();
-                ctx.arc(tr.x, tr.y, tr.radius, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            ctx.globalAlpha = 1.0;
-
-            if (selectedMode === 'boss' && bossBot) {
-                ctx.fillStyle = '#ff0055';
-                ctx.shadowBlur = 25;
-                ctx.shadowColor = '#f00';
-                ctx.beginPath();
-                ctx.arc(bossBot.x, bossBot.y, bossBot.radius, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.shadowBlur = 0;
-                drawBallFace(bossBot.x, bossBot.y, bossBot.radius, bossBot.vx, bossBot.vy);
-            } else if (selectedMode !== 'pvp') {
-                bots.forEach(b => {
-                    let color = '#fc3';
-                    if (b.radius < player.radius * 0.95) color = '#3f9';
-                    if (b.radius > player.radius * 1.05) color = '#f36';
-                    ctx.fillStyle = freezeTimer > 0 ? '#0ff' : color;
-                    ctx.shadowBlur = 12;
-                    ctx.shadowColor = ctx.fillStyle;
-                    ctx.beginPath();
-                    ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.shadowBlur = 0;
-                    if (b.radius > 10) drawBallFace(b.x, b.y, b.radius, b.vx, b.vy);
-                });
-            } else {
-                ctx.fillStyle = player2.color;
-                ctx.shadowBlur = 25;
-                ctx.shadowColor = player2.color;
-                ctx.beginPath();
-                ctx.arc(player2.x, player2.y, player2.radius, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.shadowBlur = 0;
-                drawBallFace(player2.x, player2.y, player2.radius, player2.vx, player2.vy);
-            }
-
-            let drawRadius = player.radius + (selectedSkill === 'giant' && activeSkillTimer > 0 ? player.radius * 0.5 : 0);
-
-            ctx.fillStyle = pColor;
-            ctx.shadowBlur = 25;
-            ctx.shadowColor = pColor;
             ctx.beginPath();
-            ctx.arc(player.x, player.y, drawRadius, 0, Math.PI * 2);
+            ctx.arc(canvas.width / 2, canvas.height / 2, player.radius, 0, Math.PI * 2);
+            ctx.fillStyle = player.color;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = player.color;
             ctx.fill();
             ctx.shadowBlur = 0;
 
-            if (spawnProtectionTimer > 0 || (selectedSkill === 'ghost' && activeSkillTimer > 0)) {
-                ctx.strokeStyle = '#0ff';
-                ctx.lineWidth = 4;
-                ctx.shadowBlur = 20;
-                ctx.shadowColor = '#0ff';
-                ctx.beginPath();
-                ctx.arc(player.x, player.y, drawRadius + 8, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.shadowBlur = 0;
-            }
-
-            if (playerSkin === 'hearts') {
-                ctx.fillStyle = '#fff';
-                ctx.font = `${drawRadius * 0.6}px sans-serif`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('❤️', player.x, player.y);
-            } else {
-                drawBallFace(player.x, player.y, drawRadius, player.vx, player.vy);
-            }
-
-            ctx.restore();
-
+            // Desenează joystick-ul vizual pe ecran când este activat
             if (joystick.active) {
-                ctx.strokeStyle = 'rgba(74, 175, 255, 0.3)';
+                ctx.beginPath();
+                ctx.arc(joystick.startX, joystick.startY, 40, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(74, 175, 255, 0.4)';
                 ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(joystick.startX, joystick.startY, 50, 0, Math.PI * 2);
                 ctx.stroke();
-                ctx.fillStyle = 'rgba(74, 175, 255, 0.6)';
+
                 ctx.beginPath();
-                ctx.arc(joystick.currentX, joystick.currentY, 22, 0, Math.PI * 2);
+                ctx.arc(joystick.currentX, joystick.currentY, 20, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(74, 175, 255, 0.7)';
                 ctx.fill();
             }
 
-            if (selectedMode === 'pvp' && joystick2.active) {
-                ctx.strokeStyle = 'rgba(63, 255, 153, 0.3)';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(joystick2.startX, joystick2.startY, 50, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.fillStyle = 'rgba(63, 255, 153, 0.6)';
-                ctx.beginPath();
-                ctx.arc(joystick2.currentX, joystick2.currentY, 22, 0, Math.PI * 2);
-                ctx.fill();
-            }
+            document.getElementById('scoreVal').innerText = Math.floor(player.radius);
 
-            drawMinimap();
-        }
-
-        function drawMinimap() {
-            mCtx.clearRect(0, 0, 100, 100);
-            let scale = 100 / MAP_SIZE;
-
-            if (selectedMode === 'boss' && bossBot) {
-                mCtx.fillStyle = '#ff0055';
-                mCtx.beginPath();
-                mCtx.arc(bossBot.x * scale, bossBot.y * scale, 4, 0, Math.PI * 2);
-                mCtx.fill();
-            } else if (selectedMode !== 'pvp') {
-                bots.forEach(b => {
-                    mCtx.fillStyle = b.radius < player.radius ? '#3f9' : '#f36';
-                    mCtx.beginPath();
-                    mCtx.arc(b.x * scale, b.y * scale, Math.max(1.5, b.radius * scale), 0, Math.PI * 2);
-                    mCtx.fill();
-                });
-            } else {
-                mCtx.fillStyle = player2.color;
-                mCtx.beginPath();
-                mCtx.arc(player2.x * scale, player2.y * scale, 3, 0, Math.PI * 2);
-                mCtx.fill();
-            }
-
-            blackHoles.forEach(bh => {
-                mCtx.fillStyle = '#800080';
-                mCtx.beginPath();
-                mCtx.arc(bh.x * scale, bh.y * scale, 3, 0, Math.PI * 2);
-                mCtx.fill();
-            });
-
-            mCtx.fillStyle = player.color;
-            mCtx.beginPath();
-            mCtx.arc(player.x * scale, player.y * scale, Math.max(2.5, player.radius * scale), 0, Math.PI * 2);
-            mCtx.fill();
-        }
-
-        function menuLoop() {
-            if (!gameRunning) {
-                ctx.fillStyle = '#05050f';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                menuBalls.forEach(b => {
-                    b.x += b.vx;
-                    b.y += b.vy;
-                    if (b.x <= 0 || b.x >= window.innerWidth) b.vx *= -1;
-                    if (b.y <= 0 || b.y >= window.innerHeight) b.vy *= -1;
-
-                    ctx.fillStyle = b.color;
-                    ctx.shadowBlur = 15;
-                    ctx.shadowColor = b.color;
-                    ctx.beginPath();
-                    ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.shadowBlur = 0;
-                });
-            }
-            requestAnimationFrame(menuLoop);
-        }
-        menuLoop();
-
-        function gameLoop() {
-            if (gameRunning) {
-                update();
-                draw();
-                animationFrame = requestAnimationFrame(gameLoop);
+            if (player.radius >= 200) {
+                gameRunning = false;
+                document.getElementById('gameOverTitle').innerText = translations[currentLang].winTitle;
+                document.getElementById('gameOverSub').innerText = translations[currentLang].winSub;
+                document.getElementById('screen-gameover').classList.remove('hidden');
+                triggerAchievement('eliteSize', 'Elite Size: Ai atins mărimea maximă!');
             }
         }
 
-        function startGame() {
-            player.x = MAP_SIZE / 2;
-            player.y = MAP_SIZE / 2;
-            player.radius = 15;
-            player.speed = player.baseSpeed;
-            player.trail = [];
-            spawnProtectionTimer = 120;
-            activeSkillTimer = 0;
-            isPaused = false;
-
-            if (selectedMode === 'pvp') {
-                player2.x = MAP_SIZE / 2 + 100;
-                player2.y = MAP_SIZE / 2 + 100;
-                player2.radius = 15;
-            }
-
-            initEntities();
-            document.getElementById('screen-options').classList.add('hidden');
-            gameRunning = true;
-            cancelAnimationFrame(animationFrame);
-            gameLoop();
-        }
-
-        function gameOver(win) {
-            gameRunning = false;
-            cancelAnimationFrame(animationFrame);
-            let t = translations[currentLang];
-            let title = document.getElementById('gameOverTitle');
-            let sub = document.getElementById('gameOverSub');
-
-            if (win) {
-                title.innerText = t.winTitle;
-                title.style.color = "#3f9";
-                sub.innerText = t.winSub;
-            } else {
-                title.innerText = t.loseTitle;
-                title.style.color = "#f36";
-                sub.innerText = t.loseSub;
-            }
-
-            let unlockedList = [];
-            if (achievementsState.botHunter) unlockedList.replace ? "" : ""; // safe
-            if (achievementsState.botHunter) unlockedList.push("Vânzătorul de boți");
-            if (achievementsState.survivor) unlockedList.push("Supraviețuitorul");
-            if (achievementsState.eliteSize) unlockedList.push("Mărime de Elită");
-
-            document.getElementById('achievementsList').innerText = unlockedList.length > 0 
-                ? "🏆 Deblocate: " + unlockedList.join(", ") 
-                : "🏆 Realizări obținute în această sesiune: Niciuna";
-
-            document.getElementById('screen-gameover').classList.remove('hidden');
-        }
+        gameLoop();
     </script>
 </body>
 </html>
