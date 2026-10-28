@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Neon Devorator - Balanced Bots Edition</title>
+    <title>Neon Devorator - Dynamic Zoom Edition</title>
     <style>
         * {
             box-sizing: border-box;
@@ -927,9 +927,9 @@
             ctx.fill();
         }
 
-        function updateAndDrawFood() {
-            let halfW = canvas.width / 2;
-            let halfH = canvas.height / 2;
+        function updateAndDrawFood(zoom) {
+            let halfW = (canvas.width / 2) / zoom;
+            let halfH = (canvas.height / 2) / zoom;
 
             for (let i = food.length - 1; i >= 0; i--) {
                 let f = food[i];
@@ -949,24 +949,23 @@
                     continue;
                 }
 
-                let screenX = f.x - player.x + halfW;
-                let screenY = f.y - player.y + halfH;
+                let screenX = (f.x - player.x) * zoom + canvas.width / 2;
+                let screenY = (f.y - player.y) * zoom + canvas.height / 2;
 
-                if (screenX >= -10 && screenX <= canvas.width + 10 &&
-                    screenY >= -10 && screenY <= canvas.height + 10) {
+                if (screenX >= -20 && screenX <= canvas.width + 20 &&
+                    screenY >= -20 && screenY <= canvas.height + 20) {
                     ctx.beginPath();
-                    ctx.arc(screenX, screenY, f.radius, 0, Math.PI * 2);
+                    ctx.arc(screenX, screenY, f.radius * zoom, 0, Math.PI * 2);
                     ctx.fillStyle = f.color;
                     ctx.fill();
                 }
             }
         }
 
-        // VITEZĂ REDUSĂ SEMNIFICATIV PENTRU BOȚI
-        function updateAndDrawBots() {
+        function updateAndDrawBots(zoom) {
             let speedMult = selectedDifficulty === 'easy' ? 0.6 : (selectedDifficulty === 'mid' ? 0.9 : 1.2);
-            let halfW = canvas.width / 2;
-            let halfH = canvas.height / 2;
+            let halfW = (canvas.width / 2) / zoom;
+            let halfH = (canvas.height / 2) / zoom;
 
             for (let i = bots.length - 1; i >= 0; i--) {
                 let b = bots[i];
@@ -1025,17 +1024,18 @@
                     }
                 }
 
-                let bScreenX = b.x - player.x + halfW;
-                let bScreenY = b.y - player.y + halfH;
+                let bScreenX = (b.x - player.x) * zoom + canvas.width / 2;
+                let bScreenY = (b.y - player.y) * zoom + canvas.height / 2;
+                let scaledBRadius = b.radius * zoom;
 
-                if (bScreenX >= -b.radius && bScreenX <= canvas.width + b.radius &&
-                    bScreenY >= -b.radius && bScreenY <= canvas.height + b.radius) {
+                if (bScreenX >= -scaledBRadius && bScreenX <= canvas.width + scaledBRadius &&
+                    bScreenY >= -scaledBRadius && bScreenY <= canvas.height + scaledBRadius) {
                     ctx.beginPath();
-                    ctx.arc(bScreenX, bScreenY, b.radius, 0, Math.PI * 2);
+                    ctx.arc(bScreenX, bScreenY, scaledBRadius, 0, Math.PI * 2);
                     ctx.fillStyle = b.color;
                     ctx.fill();
 
-                    drawEyes(bScreenX, bScreenY, b.radius, b.angle);
+                    drawEyes(bScreenX, bScreenY, scaledBRadius, b.angle);
                 }
             }
         }
@@ -1070,6 +1070,13 @@
 
             let dashPct = (dashCooldown / MAX_DASH_COOLDOWN) * 182.2;
             document.getElementById('dashProgress').style.strokeDashoffset = dashPct;
+
+            // CALCUL ZOOM DINAMIC (Cu cat esti mai mare, cu atat camera se micsorează / face zoom out)
+            let targetZoom = Math.max(0.4, 15 / player.radius); 
+            // Folosim un filtru de interpolare lină ca să nu facă zoom brusc
+            if (window.currentZoom === undefined) window.currentZoom = 1;
+            window.currentZoom += (targetZoom - window.currentZoom) * 0.1;
+            let zoom = window.currentZoom;
 
             let nextX = player.x;
             let nextY = player.y;
@@ -1116,10 +1123,10 @@
             player.trail.forEach(t => {
                 t.alpha -= 0.05;
                 if (t.alpha > 0) {
-                    let tScreenX = t.x - player.x + canvas.width / 2;
-                    let tScreenY = t.y - player.y + canvas.height / 2;
+                    let tScreenX = (t.x - player.x) * zoom + canvas.width / 2;
+                    let tScreenY = (t.y - player.y) * zoom + canvas.height / 2;
                     ctx.beginPath();
-                    ctx.arc(tScreenX, tScreenY, t.radius * 0.8, 0, Math.PI * 2);
+                    ctx.arc(tScreenX, tScreenY, t.radius * 0.8 * zoom, 0, Math.PI * 2);
                     ctx.fillStyle = `rgba(74, 175, 255, ${t.alpha * 0.4})`;
                     ctx.fill();
                 }
@@ -1127,19 +1134,19 @@
 
             if (selectedMode === 'pacman') {
                 ctx.strokeStyle = '#f0f';
-                ctx.lineWidth = 4;
+                ctx.lineWidth = 4 * zoom;
                 ctx.shadowBlur = 12;
                 ctx.shadowColor = '#f0f';
                 for (let w of labirinthWalls) {
-                    ctx.strokeRect(w.x - player.x + canvas.width / 2, w.y - player.y + canvas.height / 2, w.w, w.h);
+                    ctx.strokeRect((w.x - player.x) * zoom + canvas.width / 2, (w.y - player.y) * zoom + canvas.height / 2, w.w * zoom, w.h * zoom);
                 }
                 ctx.shadowBlur = 0;
             }
 
-            updateAndDrawFood();
+            updateAndDrawFood(zoom);
 
             if (selectedMode !== 'pacman') {
-                updateAndDrawBots();
+                updateAndDrawBots(zoom);
             }
 
             if (selectedMode === 'pacman') {
@@ -1148,18 +1155,19 @@
                     g.x += Math.cos(angle) * g.speed;
                     g.y += Math.sin(angle) * g.speed;
 
-                    let gScreenX = g.x - player.x + canvas.width / 2;
-                    let gScreenY = g.y - player.y + canvas.height / 2;
+                    let gScreenX = (g.x - player.x) * zoom + canvas.width / 2;
+                    let gScreenY = (g.y - player.y) * zoom + canvas.height / 2;
+                    let scaledGRadius = g.radius * zoom;
 
                     ctx.beginPath();
-                    ctx.arc(gScreenX, gScreenY, g.radius, 0, Math.PI * 2);
+                    ctx.arc(gScreenX, gScreenY, scaledGRadius, 0, Math.PI * 2);
                     ctx.fillStyle = '#ff0033';
                     ctx.shadowBlur = 15;
                     ctx.shadowColor = '#ff0033';
                     ctx.fill();
                     ctx.shadowBlur = 0;
 
-                    drawEyes(gScreenX, gScreenY, g.radius, angle);
+                    drawEyes(gScreenX, gScreenY, scaledGRadius, angle);
 
                     if (spawnInvincibilityTimer === 0 && Math.hypot(player.x - g.x, player.y - g.y) < player.radius + g.radius) {
                         gameRunning = false;
@@ -1171,14 +1179,16 @@
             }
 
             ctx.save();
+            let scaledPlayerRadius = player.radius * zoom;
+
             if (spawnInvincibilityTimer > 0) {
                 ctx.globalAlpha = 0.4;
 
-                let pulseRadius = player.radius + 8 + Math.sin(Date.now() / 100) * 4;
+                let pulseRadius = scaledPlayerRadius + 8 * zoom + Math.sin(Date.now() / 100) * 4;
                 ctx.beginPath();
                 ctx.arc(canvas.width / 2, canvas.height / 2, pulseRadius, 0, Math.PI * 2);
                 ctx.strokeStyle = '#00ffff';
-                ctx.lineWidth = 3;
+                ctx.lineWidth = 3 * zoom;
                 ctx.shadowBlur = 15;
                 ctx.shadowColor = '#00ffff';
                 ctx.stroke();
@@ -1187,9 +1197,9 @@
 
             if (activeSkillTimer > 0 && playerAuraColor !== 'none') {
                 ctx.beginPath();
-                ctx.arc(canvas.width / 2, canvas.height / 2, player.radius + 12, 0, Math.PI * 2);
+                ctx.arc(canvas.width / 2, canvas.height / 2, scaledPlayerRadius + 12 * zoom, 0, Math.PI * 2);
                 ctx.strokeStyle = playerAuraColor;
-                ctx.lineWidth = 4;
+                ctx.lineWidth = 4 * zoom;
                 ctx.shadowBlur = 25;
                 ctx.shadowColor = playerAuraColor;
                 ctx.stroke();
@@ -1197,14 +1207,14 @@
             }
 
             ctx.beginPath();
-            ctx.arc(canvas.width / 2, canvas.height / 2, player.radius, 0, Math.PI * 2);
+            ctx.arc(canvas.width / 2, canvas.height / 2, scaledPlayerRadius, 0, Math.PI * 2);
             ctx.fillStyle = player.color;
             ctx.shadowBlur = 20;
             ctx.shadowColor = player.color;
             ctx.fill();
             ctx.shadowBlur = 0;
 
-            drawEyes(canvas.width / 2, canvas.height / 2, player.radius, player.angle || 0);
+            drawEyes(canvas.width / 2, canvas.height / 2, scaledPlayerRadius, player.angle || 0);
             ctx.restore();
 
             mCtx.fillStyle = '#05050f';
