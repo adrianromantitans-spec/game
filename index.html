@@ -9,6 +9,7 @@
             box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
+            touch-action: none;
         }
         body, html {
             margin: 0;
@@ -24,7 +25,6 @@
             display: block;
             width: 100%;
             height: 100%;
-            touch-action: none;
         }
         
         #ui-top {
@@ -116,7 +116,6 @@
             cursor: pointer;
             backdrop-filter: blur(4px);
             transition: background 0.2s;
-            touch-action: none;
         }
         .action-btn:active {
             transform: scale(0.95);
@@ -129,7 +128,6 @@
             width: 65px;
             height: 65px;
             z-index: 20;
-            touch-action: none;
         }
         #dashBtn {
             width: 100%;
@@ -331,11 +329,11 @@
 
         <div style="font-size:11px; color:#aaa; margin-bottom:2px;" id="modeLabel">MOD DE JOC</div>
         <div style="display:flex; gap:4px; margin-bottom:6px; flex-wrap:wrap; justify-content:center;">
-            <button class="menu-btn mode-btn active" data-mode="classic" style="width:70px; padding:5px 0; font-size:10px;">Classic</button>
-            <button class="menu-btn mode-btn" data-mode="survival" style="width:70px; padding:5px 0; font-size:10px;">Survival</button>
-            <button class="menu-btn mode-btn" data-mode="boss" style="width:70px; padding:5px 0; font-size:10px;">Boss</button>
-            <button class="menu-btn mode-btn" data-mode="pacman" style="width:70px; padding:5px 0; font-size:10px; border-color:#f0f; color:#f0f;">Pac-Cyber</button>
-            <button class="menu-btn mode-btn" data-mode="pvp" style="width:70px; padding:5px 0; font-size:10px;">PvP 2P</button>
+            <button class="menu-btn mode-btn active" data-mode="classic" style="width:68px; padding:5px 0; font-size:10px;">Classic</button>
+            <button class="menu-btn mode-btn" data-mode="survival" style="width:68px; padding:5px 0; font-size:10px;">Survival</button>
+            <button class="menu-btn mode-btn" data-mode="boss" style="width:68px; padding:5px 0; font-size:10px;">Boss</button>
+            <button class="menu-btn mode-btn" data-mode="pacman" style="width:68px; padding:5px 0; font-size:10px; border-color:#f0f; color:#f0f;">Pac-Cyber</button>
+            <button class="menu-btn mode-btn" data-mode="pvp" style="width:68px; padding:5px 0; font-size:10px;">PvP 2P</button>
         </div>
 
         <div style="font-size:11px; color:#aaa; margin-bottom:2px;" id="skillChoiceLabel">ABILITATE SPECIALĂ</div>
@@ -491,12 +489,17 @@
         let skillCooldown = 0;
         const MAX_SKILL_COOLDOWN = 600;
         let activeSkillTimer = 0;
-        let spawnProtection = 0;
 
         let player = {
-            x: 150, y: 150,
+            x: MAP_SIZE / 2, y: MAP_SIZE / 2,
             radius: 15, color: '#4af', baseSpeed: 4.5, speed: 4.5,
             vx: 0, vy: 0, angle: 0
+        };
+
+        let player2 = {
+            x: MAP_SIZE / 2 + 100, y: MAP_SIZE / 2 + 100,
+            radius: 15, color: '#3f9', baseSpeed: 4.5, speed: 4.5,
+            vx: 0, vy: 0
         };
 
         let bots = [];
@@ -642,7 +645,6 @@
         function initEntities() {
             bots = []; pacmanGuards = []; bossBot = null; food = []; powerups = []; traps = []; blackHoles = []; labirinthWalls = []; particles = [];
             MAP_SIZE = selectedMode === 'survival' ? 2500 : (selectedMode === 'pacman' ? 2000 : 3000);
-            spawnProtection = 180; // 3 secunde imunitate/ignorare din partea boților la start
 
             let speedMult = selectedDifficulty === 'easy' ? 1.5 : (selectedDifficulty === 'mid' ? 2.5 : 4.0);
 
@@ -675,7 +677,6 @@
                     radius: 70, vx: 2, vy: 2, baseSpeed: 2.0
                 };
             } else if (selectedMode !== 'pvp') {
-                // Generare boți normali pe Classic și Survival
                 for (let i = 0; i < (selectedMode === 'survival' ? 45 : 30); i++) {
                     let bRadius = Math.random() > 0.3 ? (Math.random() * 25 + 10) : (Math.random() * 60 + 20);
                     bots.push({
@@ -703,6 +704,20 @@
                         x: Math.random() * (MAP_SIZE - 100) + 50,
                         y: Math.random() * (MAP_SIZE - 100) + 50,
                         radius: 9, type: 'magenta', color: '#f3f'
+                    });
+                }
+                for (let i = 0; i < 3; i++) {
+                    blackHoles.push({
+                        x: Math.random() * (MAP_SIZE - 600) + 300,
+                        y: Math.random() * (MAP_SIZE - 600) + 300,
+                        radius: 35
+                    });
+                }
+                for (let i = 0; i < 8; i++) {
+                    traps.push({
+                        x: Math.random() * (MAP_SIZE - 400) + 200,
+                        y: Math.random() * (MAP_SIZE - 400) + 200,
+                        radius: 18
                     });
                 }
             }
@@ -906,7 +921,7 @@
             updateRecordDisplay();
         }
 
-        // Funcție pentru desenat ochi pe entități (jucător sau boți)
+        // Desenare ochi clasici cu privire direcțională
         function drawEyes(x, y, radius, angle) {
             let eyeOffset = radius * 0.35;
             let eyeRadius = Math.max(3, radius * 0.2);
@@ -917,7 +932,6 @@
             let rightEyeX = x + Math.cos(angle + 0.6) * eyeOffset;
             let rightEyeY = y + Math.sin(angle + 0.6) * eyeOffset;
 
-            // Ochi stâng
             ctx.beginPath();
             ctx.arc(leftEyeX, leftEyeY, eyeRadius, 0, Math.PI * 2);
             ctx.fillStyle = '#fff';
@@ -927,7 +941,6 @@
             ctx.fillStyle = '#000';
             ctx.fill();
 
-            // Ochi drept
             ctx.beginPath();
             ctx.arc(rightEyeX, rightEyeY, eyeRadius, 0, Math.PI * 2);
             ctx.fillStyle = '#fff';
@@ -965,7 +978,6 @@
             if (skillCooldown > 0) skillCooldown--;
             if (activeSkillTimer > 0) activeSkillTimer--;
             if (freezeTimer > 0) freezeTimer--;
-            if (spawnProtection > 0) spawnProtection--;
 
             let dashPct = (dashCooldown / MAX_DASH_COOLDOWN) * 182.2;
             document.getElementById('dashProgress').style.strokeDashoffset = dashPct;
@@ -1011,7 +1023,7 @@
             ctx.fillStyle = '#05050f';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Randare perechi labirint Pac-Man
+            // Labirint Pac-Man
             if (selectedMode === 'pacman') {
                 ctx.strokeStyle = '#f0f';
                 ctx.lineWidth = 4;
@@ -1023,7 +1035,7 @@
                 ctx.shadowBlur = 0;
             }
 
-            // Mâncare pe hartă
+            // Mâncare
             food.forEach((f, index) => {
                 let screenX = f.x - player.x + canvas.width / 2;
                 let screenY = f.y - player.y + canvas.height / 2;
@@ -1043,7 +1055,7 @@
                 ctx.fill();
             });
 
-            // Randare Boți normali cu tot cu ochi și logica lor de mișcare/ataca
+            // Boți normali complet funcționali cu ochi și interacțiune
             if (selectedMode !== 'pacman' && selectedMode !== 'boss') {
                 bots.forEach((b, index) => {
                     b.x += b.vx;
@@ -1053,18 +1065,18 @@
                     if (b.y < b.radius || b.y > MAP_SIZE - b.radius) b.vy *= -1;
 
                     let distToPlayer = Math.hypot(player.x - b.x, player.y - b.y);
-                    if (spawnProtection === 0 && b.radius > player.radius * 1.1 && distToPlayer < 300) {
+                    if (b.radius > player.radius * 1.1 && distToPlayer < 350) {
                         let angle = Math.atan2(player.y - b.y, player.x - b.x);
-                        b.x += Math.cos(angle) * (b.baseSpeed * 0.5);
-                        b.y += Math.sin(angle) * (b.baseSpeed * 0.5);
+                        b.x += Math.cos(angle) * (b.baseSpeed * 0.4);
+                        b.y += Math.sin(angle) * (b.baseSpeed * 0.4);
                     }
 
                     if (distToPlayer < player.radius + b.radius) {
-                        if (player.radius > b.radius * 1.05 && spawnProtection === 0) {
+                        if (player.radius > b.radius * 1.05) {
                             player.radius += b.radius * 0.3;
                             bots.splice(index, 1);
                             playSound(1200, 'sine', 0.2);
-                        } else if (b.radius > player.radius * 1.05 && spawnProtection === 0) {
+                        } else if (b.radius > player.radius * 1.05) {
                             gameRunning = false;
                             document.getElementById('gameOverTitle').innerText = translations[currentLang].loseTitle;
                             document.getElementById('gameOverSub').innerText = "Ai fost mâncat de un bot mai mare!";
@@ -1080,7 +1092,6 @@
                     ctx.fillStyle = b.color;
                     ctx.fill();
 
-                    // Desenăm ochii și pe boți
                     let bAngle = Math.atan2(b.vy, b.vx);
                     drawEyes(bScreenX, bScreenY, b.radius, bAngle);
                 });
@@ -1106,7 +1117,7 @@
 
                     drawEyes(gScreenX, gScreenY, g.radius, angle);
 
-                    if (Math.hypot(player.x - g.x, player.y - g.y) < player.radius + g.radius && spawnProtection === 0) {
+                    if (Math.hypot(player.x - g.x, player.y - g.y) < player.radius + g.radius) {
                         gameRunning = false;
                         document.getElementById('gameOverTitle').innerText = translations[currentLang].loseTitle;
                         document.getElementById('gameOverSub').innerText = "Ai fost prins de gardianul roșu!";
@@ -1138,7 +1149,7 @@
                 ctx.shadowBlur = 0;
             }
 
-            // Jucător principal
+            // Jucător
             ctx.beginPath();
             ctx.arc(canvas.width / 2, canvas.height / 2, player.radius, 0, Math.PI * 2);
             ctx.fillStyle = player.color;
@@ -1147,22 +1158,18 @@
             ctx.fill();
             ctx.shadowBlur = 0;
 
-            // Desenare ochi jucător
             drawEyes(canvas.width / 2, canvas.height / 2, player.radius, player.angle || 0);
 
-            // Joystick vizual
-            if (joystick.active) {
-                ctx.beginPath();
-                ctx.arc(joystick.startX, joystick.startY, 40, 0, Math.PI * 2);
-                ctx.strokeStyle = 'rgba(74, 175, 255, 0.4)';
-                ctx.lineWidth = 3;
-                ctx.stroke();
-
-                ctx.beginPath();
-                ctx.arc(joystick.currentX, joystick.currentY, 20, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(74, 175, 255, 0.7)';
-                ctx.fill();
-            }
+            // Minimap simplu
+            mCtx.fillStyle = '#05050f';
+            mCtx.fillRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+            let scaleM = minimapCanvas.width / MAP_SIZE;
+            bots.forEach(b => {
+                mCtx.fillStyle = b.color;
+                mCtx.fillRect(b.x * scaleM, b.y * scaleM, 2, 2);
+            });
+            mCtx.fillStyle = '#4af';
+            mCtx.fillRect(player.x * scaleM, player.y * scaleM, 4, 4);
 
             document.getElementById('scoreVal').innerText = Math.floor(player.radius);
 
