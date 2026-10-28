@@ -216,12 +216,12 @@
 
         .shop-tabs {
             display: flex;
-            gap: 6px;
+            gap: 8px;
             margin-bottom: 15px;
         }
 
         .shop-tab-btn {
-            padding: 6px 14px;
+            padding: 6px 16px;
             font-size: 12px;
             border-radius: 15px;
             border: 1px solid #4af;
@@ -335,18 +335,16 @@
         </div>
 
         <button id="btnPlayNow" class="menu-btn btn-primary">JOACĂ ACUM</button>
-        <button id="btnOpenShop" class="menu-btn" style="border-color:#ff3; color:#ff3;">🛒 MAGAZIN UNIFICAT</button>
+        <button id="btnOpenShop" class="menu-btn" style="border-color:#ff3; color:#ff3;">🛒 MAGAZIN</button>
     </div>
 
-    <!-- 2. Magazin cu Labels/Tab-uri Separated -->
+    <!-- 2. Magazin cu Tab-uri Separate (Skin-uri / Aure) -->
     <div id="screen-shop" class="menu-overlay hidden">
         <h1 style="color:#ff3; text-shadow: 0 0 20px #ff3;">MAGAZIN</h1>
         
-        <!-- Etichete / Tabs -->
         <div class="shop-tabs">
             <button class="shop-tab-btn active" data-tab="skins">Skin-uri</button>
             <button class="shop-tab-btn" data-tab="auras">Aure Speciale</button>
-            <button class="shop-tab-btn" data-tab="particles">Particule Urmă</button>
         </div>
 
         <div class="shop-grid" id="shopGrid"></div>
@@ -421,7 +419,6 @@
         let selectedSkill = 'ghost';
         let currentLang = 'ro';
         let playerSkin = '#4af';
-        let playerParticleType = 'original'; // original = trail-ul clasic din codul tău
         let playerAuraColor = 'none'; 
         let activeShopTab = 'skins';
         let audioVolume = 0.5;
@@ -429,7 +426,6 @@
         let neonCoins = parseInt(localStorage.getItem('nd_coins')) || 0;
         document.getElementById('coinsVal').innerText = neonCoins;
 
-        // Baza de date pentru magazin pe categorii/tab-uri
         let shopData = {
             skins: [
                 { id: '#4af', name: 'Neon Blue', price: 0, owned: true },
@@ -438,14 +434,9 @@
                 { id: 'matrix', name: 'Matrix', price: 100, owned: localStorage.getItem('skin_matrix') === 'true' }
             ],
             auras: [
-                { id: 'none', name: 'Fără Aură', price: 0, owned: true },
+                { id: 'none', name: 'Fără Aură (Original)', price: 0, owned: true },
                 { id: '#ff0055', name: 'Aura Roșie', price: 100, owned: localStorage.getItem('cust_aurared') === 'true' },
                 { id: '#00ffcc', name: 'Aura Cyan', price: 150, owned: localStorage.getItem('cust_auracyan') === 'true' }
-            ],
-            particles: [
-                { id: 'original', name: 'Implicit (Original)', price: 0, owned: true },
-                { id: 'stars', name: 'Steluțe ⭐', price: 50, owned: localStorage.getItem('cust_stars') === 'true' },
-                { id: 'hearts', name: 'Inimi ❤️', price: 80, owned: localStorage.getItem('cust_hearts') === 'true' }
             ]
         };
 
@@ -458,7 +449,6 @@
                 let isSelected = false;
                 if (activeShopTab === 'skins') isSelected = (playerSkin === item.id);
                 if (activeShopTab === 'auras') isSelected = (playerAuraColor === item.id);
-                if (activeShopTab === 'particles') isSelected = (playerParticleType === item.id);
 
                 let div = document.createElement('div');
                 div.className = `shop-item ${item.owned ? 'owned' : ''} ${isSelected ? 'selected' : ''}`;
@@ -470,7 +460,6 @@
                     if (item.owned) {
                         if (activeShopTab === 'skins') { playerSkin = item.id; player.color = playerSkin; }
                         if (activeShopTab === 'auras') playerAuraColor = item.id;
-                        if (activeShopTab === 'particles') playerParticleType = item.id;
                         renderShop();
                     } else {
                         if (neonCoins >= item.price) {
@@ -481,7 +470,6 @@
                             localStorage.setItem((activeShopTab === 'skins' ? 'skin_' : 'cust_') + item.id.replace('#',''), 'true');
                             if (activeShopTab === 'skins') { playerSkin = item.id; player.color = playerSkin; }
                             if (activeShopTab === 'auras') playerAuraColor = item.id;
-                            if (activeShopTab === 'particles') playerParticleType = item.id;
                             renderShop();
                             playSound(950, 'sine', 0.2);
                         } else {
@@ -574,7 +562,7 @@
                 mainTitle: "NEON DEVORATOR",
                 langLabel: "LIMBĂ / LANGUAGE",
                 btnPlayNow: "JOACĂ ACUM",
-                btnOpenShop: "🛒 MAGAZIN UNIFICAT",
+                btnOpenShop: "🛒 MAGAZIN",
                 optTitle: "CONFIGURARE",
                 modeLabel: "MOD DE JOC",
                 skillChoiceLabel: "ABILITATE SPECIALĂ",
@@ -1005,30 +993,23 @@
                 player.y = Math.max(player.radius, Math.min(MAP_SIZE - player.radius, nextY));
             }
 
-            // Urma clasică (Trail din codul tău original)
+            // Dâra originală din spatele jucătorului
             player.trail.push({ x: player.x, y: player.y, radius: player.radius, alpha: 0.6 });
             if (player.trail.length > 8) player.trail.shift();
 
             ctx.fillStyle = '#05050f';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Desenează Urma / Trail-ul din spate (Original)
+            // Randare dâră originală
             player.trail.forEach(t => {
                 t.alpha -= 0.05;
                 if (t.alpha > 0) {
                     let tScreenX = t.x - player.x + canvas.width / 2;
                     let tScreenY = t.y - player.y + canvas.height / 2;
-                    
-                    if (playerParticleType === 'original') {
-                        ctx.beginPath();
-                        ctx.arc(tScreenX, tScreenY, t.radius * 0.8, 0, Math.PI * 2);
-                        ctx.fillStyle = `rgba(74, 175, 255, ${t.alpha * 0.4})`;
-                        ctx.fill();
-                    } else {
-                        ctx.font = '14px sans-serif';
-                        ctx.fillStyle = playerParticleType === 'stars' ? '#ff3' : '#f36';
-                        ctx.fillText(playerParticleType === 'stars' ? '⭐' : '❤️', tScreenX, tScreenY);
-                    }
+                    ctx.beginPath();
+                    ctx.arc(tScreenX, tScreenY, t.radius * 0.8, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(74, 175, 255, ${t.alpha * 0.4})`;
+                    ctx.fill();
                 }
             });
 
