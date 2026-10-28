@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Neon Devorator - Dynamic Zoom Edition</title>
+    <title>Neon Devorator - Fixed Zoom Edition</title>
     <style>
         * {
             box-sizing: border-box;
@@ -928,9 +928,6 @@
         }
 
         function updateAndDrawFood(zoom) {
-            let halfW = (canvas.width / 2) / zoom;
-            let halfH = (canvas.height / 2) / zoom;
-
             for (let i = food.length - 1; i >= 0; i--) {
                 let f = food[i];
 
@@ -955,7 +952,7 @@
                 if (screenX >= -20 && screenX <= canvas.width + 20 &&
                     screenY >= -20 && screenY <= canvas.height + 20) {
                     ctx.beginPath();
-                    ctx.arc(screenX, screenY, f.radius * zoom, 0, Math.PI * 2);
+                    ctx.arc(screenX, screenY, Math.max(1.5, f.radius * zoom), 0, Math.PI * 2);
                     ctx.fillStyle = f.color;
                     ctx.fill();
                 }
@@ -964,8 +961,6 @@
 
         function updateAndDrawBots(zoom) {
             let speedMult = selectedDifficulty === 'easy' ? 0.6 : (selectedDifficulty === 'mid' ? 0.9 : 1.2);
-            let halfW = (canvas.width / 2) / zoom;
-            let halfH = (canvas.height / 2) / zoom;
 
             for (let i = bots.length - 1; i >= 0; i--) {
                 let b = bots[i];
@@ -1071,9 +1066,8 @@
             let dashPct = (dashCooldown / MAX_DASH_COOLDOWN) * 182.2;
             document.getElementById('dashProgress').style.strokeDashoffset = dashPct;
 
-            // CALCUL ZOOM DINAMIC (Cu cat esti mai mare, cu atat camera se micsorează / face zoom out)
-            let targetZoom = Math.max(0.4, 15 / player.radius); 
-            // Folosim un filtru de interpolare lină ca să nu facă zoom brusc
+            // ZOOM DINAMIC CORECT: Scade fin pe măsură ce crești în mărime
+            let targetZoom = Math.max(0.25, 30 / player.radius);
             if (window.currentZoom === undefined) window.currentZoom = 1;
             window.currentZoom += (targetZoom - window.currentZoom) * 0.1;
             let zoom = window.currentZoom;
