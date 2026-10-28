@@ -725,6 +725,15 @@
 
         let joystick = { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, touchId: null };
 
+        function resetJoystick() {
+            joystick.active = false;
+            joystick.touchId = null;
+            joystick.startX = 0;
+            joystick.startY = 0;
+            joystick.currentX = 0;
+            joystick.currentY = 0;
+        }
+
         const handlePointerDown = (e) => {
             if (!gameRunning || isPaused) return;
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -745,11 +754,9 @@
                 joystick.currentY = e.clientY;
             }
         };
-
         const handlePointerUp = (e) => {
             if (e.pointerId === joystick.touchId) {
-                joystick.active = false; 
-                joystick.touchId = null;
+                resetJoystick();
             }
         };
 
@@ -761,6 +768,16 @@
         let keys = {};
         window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
         window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+        window.addEventListener('blur', () => {
+            resetJoystick();
+            keys = {};
+        });
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                resetJoystick();
+                keys = {};
+            }
+        });
 
         document.getElementById('dashBtnWrapper').addEventListener('pointerdown', (e) => {
             e.preventDefault(); e.stopPropagation();
@@ -800,18 +817,21 @@
             e.preventDefault(); e.stopPropagation();
             if (gameRunning) {
                 isPaused = true;
+                resetJoystick();
                 document.getElementById('screen-pause').classList.remove('hidden');
             }
         });
 
         document.getElementById('btnResume').addEventListener('click', () => {
             isPaused = false;
+            resetJoystick();
             document.getElementById('screen-pause').classList.add('hidden');
         });
 
         document.getElementById('btnQuitToMenu').addEventListener('click', () => {
             isPaused = false;
             gameRunning = false;
+            resetJoystick();
             document.getElementById('screen-pause').classList.add('hidden');
             document.getElementById('screen-gameover').classList.add('hidden');
             document.getElementById('screen-main').classList.remove('hidden');
@@ -888,6 +908,8 @@
         });
 
         function startGame() {
+            resetJoystick();
+            keys = {};
             gameRunning = true;
             isPaused = false;
             player.x = MAP_SIZE / 2;
@@ -1013,6 +1035,7 @@
                         continue;
                     } else if (b.radius > player.radius * 1.05) {
                         gameRunning = false;
+                        resetJoystick();
                         document.getElementById('gameOverTitle').innerText = translations[currentLang].loseTitle;
                         document.getElementById('gameOverSub').innerText = translations[currentLang].loseSub;
                         document.getElementById('screen-gameover').classList.remove('hidden');
@@ -1165,6 +1188,7 @@
 
                     if (spawnInvincibilityTimer === 0 && Math.hypot(player.x - g.x, player.y - g.y) < player.radius + g.radius) {
                         gameRunning = false;
+                        resetJoystick();
                         document.getElementById('gameOverTitle').innerText = translations[currentLang].loseTitle;
                         document.getElementById('gameOverSub').innerText = translations[currentLang].loseSub;
                         document.getElementById('screen-gameover').classList.remove('hidden');
@@ -1225,6 +1249,7 @@
 
             if (player.radius >= 200 || (selectedMode === 'pacman' && food.length === 0)) {
                 gameRunning = false;
+                resetJoystick();
                 document.getElementById('gameOverTitle').innerText = translations[currentLang].winTitle;
                 document.getElementById('gameOverSub').innerText = translations[currentLang].winSub;
                 document.getElementById('screen-gameover').classList.remove('hidden');
