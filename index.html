@@ -723,6 +723,33 @@
             }
         }
 
+        function isPlayerBlockedByWall(x, y) {
+            return labirinthWalls.some(w =>
+                x + player.radius > w.x && x - player.radius < w.x + w.w &&
+                y + player.radius > w.y && y - player.radius < w.y + w.h
+            );
+        }
+
+        function findPacmanSpawn() {
+            let center = MAP_SIZE / 2;
+            let bestPosition = null;
+            let bestDistance = Infinity;
+
+            for (let y = player.radius; y <= MAP_SIZE - player.radius; y += 10) {
+                for (let x = player.radius; x <= MAP_SIZE - player.radius; x += 10) {
+                    if (isPlayerBlockedByWall(x, y)) continue;
+                    let distance = Math.hypot(x - center, y - center);
+                    if (distance < bestDistance) {
+                        bestPosition = { x, y };
+                        bestDistance = distance;
+                    }
+                }
+            }
+
+            if (!bestPosition) throw new Error('Nu a fost găsit un loc liber pentru jucător.');
+            return bestPosition;
+        }
+
         let joystick = { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, touchId: null };
 
         function resetJoystick() {
@@ -910,13 +937,16 @@
         function startGame() {
             resetJoystick();
             keys = {};
-            gameRunning = true;
             isPaused = false;
-            player.x = MAP_SIZE / 2;
-            player.y = MAP_SIZE / 2;
             player.radius = 15;
             player.color = playerSkin;
             initEntities();
+            let spawn = selectedMode === 'pacman'
+                ? findPacmanSpawn()
+                : { x: MAP_SIZE / 2, y: MAP_SIZE / 2 };
+            player.x = spawn.x;
+            player.y = spawn.y;
+            gameRunning = true;
             updateRecordDisplay();
         }
 
@@ -1039,6 +1069,7 @@
                         document.getElementById('gameOverTitle').innerText = translations[currentLang].loseTitle;
                         document.getElementById('gameOverSub').innerText = translations[currentLang].loseSub;
                         document.getElementById('screen-gameover').classList.remove('hidden');
+                        return;
                     }
                 }
 
@@ -1115,18 +1146,14 @@
             if (keys['a'] || keys['arrowleft']) { nextX -= player.speed; player.angle = Math.PI; }
             if (keys['d'] || keys['arrowright']) { nextX += player.speed; player.angle = 0; }
 
-            let canMove = true;
             if (selectedMode === 'pacman') {
-                for (let w of labirinthWalls) {
-                    if (nextX + player.radius > w.x && nextX - player.radius < w.x + w.w &&
-                        nextY + player.radius > w.y && nextY - player.radius < w.y + w.h) {
-                        canMove = false;
-                        break;
-                    }
+                if (!isPlayerBlockedByWall(nextX, player.y)) {
+                    player.x = Math.max(player.radius, Math.min(MAP_SIZE - player.radius, nextX));
                 }
-            }
-
-            if (canMove) {
+                if (!isPlayerBlockedByWall(player.x, nextY)) {
+                    player.y = Math.max(player.radius, Math.min(MAP_SIZE - player.radius, nextY));
+                }
+            } else {
                 player.x = Math.max(player.radius, Math.min(MAP_SIZE - player.radius, nextX));
                 player.y = Math.max(player.radius, Math.min(MAP_SIZE - player.radius, nextY));
             }
@@ -1164,10 +1191,11 @@
 
             if (selectedMode !== 'pacman') {
                 updateAndDrawBots(zoom);
+                if (!gameRunning) return;
             }
 
             if (selectedMode === 'pacman') {
-                pacmanGuards.forEach(g => {
+                for (let g of pacmanGuards) {
                     let angle = Math.atan2(player.y - g.y, player.x - g.x);
                     g.x += Math.cos(angle) * g.speed;
                     g.y += Math.sin(angle) * g.speed;
@@ -1192,8 +1220,9 @@
                         document.getElementById('gameOverTitle').innerText = translations[currentLang].loseTitle;
                         document.getElementById('gameOverSub').innerText = translations[currentLang].loseSub;
                         document.getElementById('screen-gameover').classList.remove('hidden');
+                        return;
                     }
-                });
+                }
             }
 
             ctx.save();
