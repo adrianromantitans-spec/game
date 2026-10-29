@@ -491,21 +491,65 @@ function hockeyRoundEnd(won){
  $("hockeyStats").textContent=`🏒 ${arcade.goals} - ${arcade.enemyGoals}  |  ⏱ ${Math.floor(arcade.seconds/60)}:${String(Math.floor(arcade.seconds%60)).padStart(2,"0")}  |  Șuturi: ${arcade.shots}  |  Goluri/șuturi: ${accuracy}%  |  Serie: ${streak}`;
  updateHockeyRecords();
 }
-// Control direct: coordonate ecran -> arena, pe jumătatea jucătorului.
-const hockeyTouch={active:false,id:null,x:500,y:770};
+// Control tactil Android/iPhone: touch events sunt prioritare; pointer/mouse sunt fallback.
+// Ascultam pe document in capture, astfel incat atingerea merge si in browser-ele
+// care nu trimit pointerdown direct pe canvas.
+const hockeyTouch={active:false,id:null,kind:null,x:500,y:770};
 function hockeyPointerPosition(cx,cy){
- hockeyTouch.x=clamp(500+(cx-W/2)/Math.max(.01,zoom),92,908);
- hockeyTouch.y=clamp(500+(cy-H/2)/Math.max(.01,zoom),525,902);
+ const scale=Math.max(.01,zoom);
+ hockeyTouch.x=clamp(500+(cx-W/2)/scale,92,908);
+ hockeyTouch.y=clamp(500+(cy-H/2)/scale,525,902);
 }
+function hockeyCanTouch(target){
+ if(mode!=="hockey"||!running||paused)return false;
+ // Nu interceptam butonul PAUZA sau alte elemente interactive.
+ return !(target&&target.closest&&target.closest("button, input, select, textarea, .overlay"));
+}
+function hockeyRelease(){
+ hockeyTouch.active=false;hockeyTouch.id=null;hockeyTouch.kind=null;
+}
+document.addEventListener("touchstart",e=>{
+ if(!hockeyCanTouch(e.target)||hockeyTouch.active)return;
+ // Atingerile in zona de joc, inclusiv deasupra terenului, misca paleta.
+ const t=e.changedTouches[0];if(!t)return;
+ hockeyTouch.active=true;hockeyTouch.kind="touch";hockeyTouch.id=t.identifier;
+ hockeyPointerPosition(t.clientX,t.clientY);
+ if(e.cancelable)e.preventDefault();
+},{passive:false,capture:true});
+document.addEventListener("touchmove",e=>{
+ if(!hockeyTouch.active||hockeyTouch.kind!=="touch")return;
+ for(const t of e.changedTouches){if(t.identifier===hockeyTouch.id){
+  hockeyPointerPosition(t.clientX,t.clientY);
+  if(e.cancelable)e.preventDefault();break;
+ }}
+},{passive:false,capture:true});
+function hockeyTouchEnd(e){
+ if(!hockeyTouch.active||hockeyTouch.kind!=="touch")return;
+ for(const t of e.changedTouches)if(t.identifier===hockeyTouch.id){hockeyRelease();break}
+}
+document.addEventListener("touchend",hockeyTouchEnd,{passive:true,capture:true});
+document.addEventListener("touchcancel",hockeyTouchEnd,{passive:true,capture:true});
+// Pointer Events pentru stylus si browsere care nu au Touch Events.
 canvas.addEventListener("pointerdown",e=>{
- if(mode!=="hockey"||!running||paused||hockeyTouch.active)return;
+ if(!hockeyCanTouch(e.target)||hockeyTouch.active)return;
  if(e.pointerType==="mouse"&&e.button!==0)return;
- hockeyTouch.active=true;hockeyTouch.id=e.pointerId;hockeyPointerPosition(e.clientX,e.clientY);
- try{canvas.setPointerCapture(e.pointerId)}catch{}e.preventDefault();
+ hockeyTouch.active=true;hockeyTouch.kind="pointer";hockeyTouch.id=e.pointerId;
+ hockeyPointerPosition(e.clientX,e.clientY);
+ try{canvas.setPointerCapture(e.pointerId)}catch{}
+ if(e.cancelable)e.preventDefault();
 });
-canvas.addEventListener("pointermove",e=>{if(hockeyTouch.active&&hockeyTouch.id===e.pointerId){hockeyPointerPosition(e.clientX,e.clientY);e.preventDefault()}});
-function hockeyPointerEnd(e){if(hockeyTouch.id===e.pointerId){hockeyTouch.active=false;hockeyTouch.id=null}}
-canvas.addEventListener("pointerup",hockeyPointerEnd);canvas.addEventListener("pointercancel",hockeyPointerEnd);
+document.addEventListener("pointermove",e=>{
+ if(hockeyTouch.active&&hockeyTouch.kind==="pointer"&&hockeyTouch.id===e.pointerId){
+  hockeyPointerPosition(e.clientX,e.clientY);
+  if(e.cancelable)e.preventDefault();
+ }
+},{passive:false});
+for(const name of ["pointerup","pointercancel"]){
+ document.addEventListener(name,e=>{
+  if(hockeyTouch.kind==="pointer"&&hockeyTouch.id===e.pointerId)hockeyRelease();
+ });
+}
+window.addEventListener("blur",()=>{if(hockeyTouch.active)hockeyRelease()});
 
 
 function recordKey(){return "nd_rec_"+mode}
@@ -867,7 +911,7 @@ if(mode==="hockey"){
  const ox=player.x,oy=player.y;
  if(hockeyTouch.active){
   const dx=hockeyTouch.x-player.x,dy=hockeyTouch.y-player.y;
-  const len=Math.hypot(dx,dy),maxMove=18;
+  const len=Math.hypot(dx,dy),maxMove=24;
   if(len>maxMove){player.x+=dx/len*maxMove;player.y+=dy/len*maxMove}else{player.x=hockeyTouch.x;player.y=hockeyTouch.y}
  }else{
   let dx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),dy=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
@@ -1398,7 +1442,7 @@ function updateArcade(){
   if(bots.length===0)arcadeEnd(true,"Ești ultimul supraviețuitor!",150);
  }
  if(running){
-  const targetZoom=mode==="hockey"?Math.min(W,H)/1100:Math.max(.38,30/player.radius);
+  const targetZoom=mode==="hockey"?Math.min(W/960,H/1020):Math.max(.38,30/player.radius);
   zoom+=(targetZoom-zoom)*.08;
   if(frame%15===0){$("dashBtn").style.opacity=dashCooldown>0?".5":"1";$("skillBtn").style.opacity=skillCooldown>0?".5":"1"}
  }
