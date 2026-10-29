@@ -187,7 +187,7 @@ let cameraX=1500,cameraY=1500;
 function resize(){
 W=innerWidth;
 H=innerHeight;
-DPR=Math.min(window.devicePixelRatio||1,1.5)*quality;
+DPR=Math.min(window.devicePixelRatio||1,mode==="hockey"?1.1:1.5)*quality;
 canvas.width=Math.round(W*DPR);
 canvas.height=Math.round(H*DPR);
 canvas.style.width=W+"px";
@@ -650,6 +650,7 @@ spawnPlayer();
 cameraX=player.x;cameraY=player.y;
 if(arcadeModes.has(mode)){initArcade();zoom=hockeyViewScale();notify("🏒 Glisează degetul pe teren pentru a mișca paleta!");}else arcadeStatus("");
 running=true;paused=false;
+resize(); // Selectam rezolutia potrivita modului, fara a schimba comenzile.
 $("modeHud").textContent=mode.toUpperCase();
 updateRecord();updateScore();refreshCoins();
 showScreen(null);resetJoystick();
@@ -874,6 +875,20 @@ ctx.beginPath();ctx.ellipse(ex,ey,r*.19,r*.22,0,0,TAU);ctx.fill();
 ctx.fillStyle="#06101c";
 ctx.beginPath();ctx.arc(ex+fx*r*.07,ey+fy*r*.07,r*.095,0,TAU);ctx.fill();
 }
+}
+// Hockey: chip fix pe ecran. Ochii si pupilele nu depind de joystick ori viteza.
+function drawHockeyFace(x,y,r,color,isEnemy){
+ drawOrb3D(x,y,r,color,0,false);
+ if(r<5)return;
+ const sign=isEnemy?1:-1;
+ const eyeY=y+sign*r*.31;
+ const pupilY=eyeY+sign*r*.065;
+ const eyeOffset=r*.32;
+ const eyeR=r*.185;
+ ctx.fillStyle="#ffffff";
+ ctx.beginPath();ctx.arc(x-eyeOffset,eyeY,eyeR,0,TAU);ctx.arc(x+eyeOffset,eyeY,eyeR,0,TAU);ctx.fill();
+ ctx.fillStyle="#06101c";
+ ctx.beginPath();ctx.arc(x-eyeOffset,pupilY,eyeR*.48,0,TAU);ctx.arc(x+eyeOffset,pupilY,eyeR*.48,0,TAU);ctx.fill();
 }
 function drawFood3D(x,y,r,color){
 if(r<1)return;
@@ -1234,7 +1249,7 @@ const x=screenX(b.x),y=screenY(b.y),r=b.radius*zoom;
 if(visible(x,y,r))drawOrb3D(x,y,r,b.color,b.angle);
 }
 if(mode==="hockey"&&arcade.enemy){
- const e=arcade.enemy;drawOrb3D(screenX(e.x),screenY(e.y),e.radius*zoom,e.color,Math.PI/2);
+ const e=arcade.enemy;drawHockeyFace(screenX(e.x),screenY(e.y),e.radius*zoom,e.color,true);
 }
 for(const g of guards){
 const x=screenX(g.x),y=screenY(g.y),r=g.radius*zoom;
@@ -1266,7 +1281,8 @@ ctx.arc(cx,cy,r+14,0,TAU);
 ctx.stroke();
 }
 if(skill==="ghost"&&skillTimer>0)ctx.globalAlpha=.48;
-drawOrb3D(cx,cy,r,mode==="hockey"?hockeySkinColor():player.color,mode==="hockey"?-Math.PI/2:player.angle);
+if(mode==="hockey")drawHockeyFace(cx,cy,r,hockeySkinColor(),false);
+else drawOrb3D(cx,cy,r,player.color,player.angle);
 ctx.globalAlpha=1;
 if(arcadeModes.has(mode))drawArcadeExtras(true);
 if(mode!=="hockey"&&frame%4===0)drawMinimap();
@@ -1384,7 +1400,7 @@ function updateHockey(){
  if(a.time%2===0){a.puckTrail.push({x:p.x,y:p.y});if(a.puckTrail.length>11)a.puckTrail.shift()}
  const remaining=hockeyTimeLimit?Math.max(0,hockeyTimeLimit-Math.floor(a.seconds)):0;
  const clock=hockeyTimeLimit?` ⏱ ${Math.floor(remaining/60)}:${String(remaining%60).padStart(2,"0")}`:` ⏱ ${Math.floor(a.seconds/60)}:${String(Math.floor(a.seconds%60)).padStart(2,"0")}`;
- arcadeStatus(`🏒 TU ${a.goals} : ${a.enemyGoals} AI  |  ${hockeyGoalLimit} goluri${clock}`);
+ if(a.time%8===0)arcadeStatus(`🏒 TU ${a.goals} : ${a.enemyGoals} AI  |  ${hockeyGoalLimit} goluri${clock}`);
  $("score").textContent=a.goals;
  if(a.time%30===0)arcadeScore(a.goals);
  if(running&&hockeyTimeLimit&&a.seconds>=hockeyTimeLimit){
