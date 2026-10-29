@@ -11,12 +11,12 @@
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--dark);color:white;font-family:Arial,sans-serif;overscroll-behavior:none}
 body{position:fixed;inset:0;touch-action:none;-webkit-user-select:none;user-select:none}
 canvas{display:block;touch-action:none}
-#game{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+#game{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
 .hidden{display:none!important}
 button{cursor:pointer;border:2px solid var(--cyan);border-radius:20px;background:#071b30;color:#66d9ff;font-weight:bold;padding:11px 18px;min-width:130px;touch-action:manipulation}
 button.selected,button:active{background:var(--cyan);color:#02111e}
 .primary{background:var(--cyan);color:#02111e}
-.overlay{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;overflow-y:auto;text-align:center;background:rgba(2,5,16,.94);touch-action:pan-y}
+.overlay{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;overflow-y:auto;text-align:center;background:rgba(2,5,16,.94);touch-action:pan-y}
 .overlay h1{margin:0 0 10px;font-size:clamp(30px,7vw,54px);color:var(--cyan);text-shadow:0 0 22px #008dff}
 #main h1{animation:pulseTitle 2s ease-in-out infinite alternate}
 @keyframes pulseTitle{
@@ -138,8 +138,18 @@ label{color:#aac4d7;font-size:13px}
 <button id="endMenuBtn">MENIU PRINCIPAL</button>
 </div>
 
+<div id="ndDiagnostic" style="position:fixed;bottom:5px;left:50%;transform:translateX(-50%);z-index:99999;background:#12334a;color:#fff;border:1px solid #49caff;border-radius:10px;padding:7px 12px;font:12px Arial;max-width:96vw;overflow-wrap:anywhere;pointer-events:none">DIAGNOSTIC: HTML încărcat · v3</div>
+<script>
+(function(){
+ var el=document.getElementById('ndDiagnostic');
+ window.ndStatus=function(msg,err){el.textContent='DIAGNOSTIC: '+msg;el.style.background=err?'#75152c':'#12334a';};
+ window.addEventListener('error',function(e){window.ndStatus('EROARE: '+e.message+' (linia '+e.lineno+')',true);});
+ window.addEventListener('unhandledrejection',function(e){window.ndStatus('PROMISE: '+String(e.reason),true);});
+})();
+</script>
 <script>
 "use strict";
+window.ndStatus("JavaScript pornit · v3");
 
 const $=id=>document.getElementById(id);
 const canvas=$("game");
@@ -349,9 +359,9 @@ clearTimeout(noticeTimer);
 noticeTimer=setTimeout(()=>$("notice").textContent="",2200);
 }
 
-$("playBtn").onclick=()=>showScreen("options");
+$("playBtn").onclick=()=>{window.ndStatus("JOACĂ apăsat · v3");showScreen("options")};
 $("backBtn").onclick=()=>showScreen("main");
-$("shopBtn").onclick=()=>{renderShop();showScreen("shop")};
+$("shopBtn").onclick=()=>{window.ndStatus("MAGAZIN apăsat · v3");renderShop();showScreen("shop")};
 $("shopBack").onclick=()=>showScreen("main");
 $("skinsTab").onclick=()=>{shopTab="skins";renderShop()};
 $("aurasTab").onclick=()=>{shopTab="auras";renderShop()};
@@ -1049,6 +1059,7 @@ translateGame();
 refreshCoins();
 updateRecord();
 requestAnimationFrame(loop);
+window.ndStatus("GATA · v3 · butoane conectate");
 </script>
 </body>
 </html>
