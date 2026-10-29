@@ -53,6 +53,7 @@ label{color:#aac4d7;font-size:13px}
 #splitBtn{bottom:calc(142px + var(--bottom))}
 #freezeBtn{bottom:calc(12px + var(--bottom))}
 }
+#main>button{width:min(320px,88vw);min-height:52px;font-size:16px}#modesMenu>button,#hockeyMenu>button{width:min(320px,88vw);min-height:52px}#main #playBtn{font-size:19px;box-shadow:0 0 21px #49caff36}#modesMenuBtn,#hockeyMenuBtn{border-color:#ff4f88;color:#ff9fbe;background:#2a0b1e}#settingsBtn{border-color:#9a80ff;color:#ccbaff}.hockey-preview{font-size:52px;padding:14px 0;color:white}.hockey-preview span{font-size:18px;color:#a6bdd1;vertical-align:middle}.overlay{padding-top:max(20px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom))}#options{justify-content:flex-start}#options h1{margin-top:15px}#options .row{margin-bottom:10px}#options label{font-size:15px}#options input{width:min(300px,80vw)}
 </style>
 </head>
 <body>
@@ -84,20 +85,15 @@ label{color:#aac4d7;font-size:13px}
 <button class="lang" data-lang="en">EN</button>
 <button class="lang" data-lang="es">ES</button>
 </div>
-<button class="primary" id="playBtn">JOACĂ ACUM</button>
+<button class="primary" id="playBtn">▶ JOACĂ CLASSIC</button>
+<button id="modesMenuBtn">🎮 MODURI DE JOC</button>
+<button id="settingsBtn">⚙ SETĂRI</button>
 <button id="shopBtn">🛒 MAGAZIN</button>
 </div>
 
 <div id="options" class="overlay hidden">
-<h1 id="optionsTitle">CONFIGURARE</h1>
-<label id="modeLabel">MOD DE JOC</label>
-<div class="row">
-<button class="mode selected" data-mode="classic">Classic</button>
-<button class="mode" data-mode="survival">Survival</button>
-<button class="mode" data-mode="boss">Boss</button>
-<button class="mode" data-mode="pacman">Pac-Cyber</button>
-<button class="mode" data-mode="hockey">🏒 NEON HOCKEY</button>
-</div>
+<h1 id="optionsTitle">SETĂRI</h1>
+<p id="settingsIntro">Personalizează jocul Classic și dificultatea adversarului din Air Hockey.</p>
 <label id="abilityLabel">ABILITATE SPECIALĂ</label>
 <div class="row">
 <button class="skill selected" data-skill="ghost">Ghost</button>
@@ -112,8 +108,22 @@ label{color:#aac4d7;font-size:13px}
 </div>
 <label id="volumeLabel">Volum: 50%</label>
 <input id="volume" type="range" min="0" max="100" value="50">
-<button class="primary" id="startBtn">START JOC</button>
-<button id="backBtn">ÎNAPOI</button>
+<button id="backBtn" class="primary">SALVEAZĂ ȘI ÎNAPOI</button>
+</div>
+
+<div id="modesMenu" class="overlay hidden">
+<h1 id="modesTitle">MODURI DE JOC</h1>
+<p id="modesIntro">Alege un mod suplimentar de joc.</p>
+<button id="hockeyMenuBtn">🏒 AIR HOCKEY</button>
+<button id="modesBackBtn">ÎNAPOI</button>
+</div>
+
+<div id="hockeyMenu" class="overlay hidden">
+<h1>🏒 AIR HOCKEY</h1>
+<p id="hockeyIntro">Înfruntă botul inteligent! Mișcă paleta cu joystickul și înscrie 5 goluri pentru victorie.</p>
+<div class="hockey-preview">🔵 <span>VS</span> 🔴</div>
+<button id="hockeyStartBtn" class="primary">▶ START HOCKEY</button>
+<button id="hockeyBackBtn">ÎNAPOI</button>
 </div>
 
 <div id="shop" class="overlay hidden">
@@ -187,7 +197,8 @@ try{localStorage.setItem(key,String(value))}catch{}
 }
 
 let coins=Number(getSaved("nd_coins",0))||0;
-let mode="classic",difficulty="mid",skill="ghost";
+let mode="classic",difficulty=getSaved("nd_difficulty","mid"),skill="ghost";
+if(!["easy","mid","hard"].includes(difficulty))difficulty="mid";
 let language=getSaved("nd_language","ro");
 let volume=.5;
 let skin=getSaved("nd_skin","#44aaff");
@@ -224,7 +235,8 @@ lostText:"Ai fost devorat de un adversar mai mare!",
 winText:"Ai dominat arena!",bossNotice:"⚠ BOSS APĂRUT!",
 notEnough:"Nu ai suficiente monede!",
 none:"Fără aură",redAura:"Aura Roșie",cyanAura:"Aura Cyan",
-easy:"UȘOR",mid:"MEDIU",hard:"GREU"
+easy:"UȘOR",mid:"MEDIU",hard:"GREU",
+classicPlay:"▶ JOACĂ CLASSIC",hockeyMenu:"🏒 AIR HOCKEY",modesMenu:"🎮 MODURI DE JOC",modesTitle:"MODURI DE JOC",modesIntro:"Alege un mod suplimentar de joc.",settings:"⚙ SETĂRI",saveBack:"SALVEAZĂ ȘI ÎNAPOI",hockeyStart:"▶ START HOCKEY",hockeyIntro:"Joacă împotriva unui bot inteligent! Primul la 5 goluri câștigă.",settingsIntro:"Alege abilitatea pentru Classic, dificultatea și volumul."
 },
 en:{
 description:"Grow, devour smaller opponents and dominate the arena!",
@@ -241,7 +253,8 @@ lostText:"You were eaten by a larger opponent!",
 winText:"You dominated the arena!",bossNotice:"⚠ BOSS APPEARED!",
 notEnough:"Not enough coins!",
 none:"No Aura",redAura:"Red Aura",cyanAura:"Cyan Aura",
-easy:"EASY",mid:"MEDIUM",hard:"HARD"
+easy:"EASY",mid:"MEDIUM",hard:"HARD",
+classicPlay:"▶ PLAY CLASSIC",hockeyMenu:"🏒 AIR HOCKEY",modesMenu:"🎮 GAME MODES",modesTitle:"GAME MODES",modesIntro:"Choose an additional game mode.",settings:"⚙ SETTINGS",saveBack:"SAVE & BACK",hockeyStart:"▶ START HOCKEY",hockeyIntro:"Play against a smart AI! First to score 5 goals wins.",settingsIntro:"Choose your Classic ability, difficulty and sound volume."
 },
 es:{
 description:"¡Crece, devora rivales más pequeños y domina la arena!",
@@ -258,13 +271,14 @@ lostText:"¡Un rival más grande te ha devorado!",
 winText:"¡Has dominado la arena!",bossNotice:"⚠ ¡JEFE APARECIÓ!",
 notEnough:"¡No tienes suficientes monedas!",
 none:"Sin aura",redAura:"Aura Roja",cyanAura:"Aura Cian",
-easy:"FÁCIL",mid:"MEDIO",hard:"DIFÍCIL"
+easy:"FÁCIL",mid:"MEDIO",hard:"DIFÍCIL",
+classicPlay:"▶ JUGAR CLASSIC",hockeyMenu:"🏒 AIR HOCKEY",modesMenu:"🎮 MODOS DE JUEGO",modesTitle:"MODOS DE JUEGO",modesIntro:"Elige un modo de juego adicional.",settings:"⚙ AJUSTES",saveBack:"GUARDAR Y VOLVER",hockeyStart:"▶ INICIAR HOCKEY",hockeyIntro:"¡Juega contra una IA inteligente! Gana quien marque 5 goles.",settingsIntro:"Elige habilidad de Classic, dificultad y volumen."
 }
 };
 const t=()=>translations[language];
 
 function showScreen(id){
-["main","options","shop","pause","gameover"].forEach(name=>
+["main","options","modesMenu","hockeyMenu","shop","pause","gameover"].forEach(name=>
 $(name).classList.toggle("hidden",name!==id));
 const playing=id===null;
 ["hud","minimap","pauseBtn","dashBtn","skillBtn","splitBtn","freezeBtn","joy"]
@@ -274,10 +288,12 @@ const playing=id===null;
 function translateGame(){
 const tr=t();
 const texts={
-mainDescription:tr.description,playBtn:tr.play,shopBtn:tr.shop,
-optionsTitle:tr.options,modeLabel:tr.gameMode,
+mainDescription:tr.description,playBtn:tr.classicPlay,shopBtn:tr.shop,
+optionsTitle:tr.settings||tr.options,settingsIntro:tr.settingsIntro,
+hockeyIntro:tr.hockeyIntro,hockeyMenuBtn:tr.hockeyMenu,modesMenuBtn:tr.modesMenu,modesTitle:tr.modesTitle,modesIntro:tr.modesIntro,modesBackBtn:tr.back,settingsBtn:tr.settings,
+hockeyStartBtn:tr.hockeyStart,hockeyBackBtn:tr.back,
 abilityLabel:tr.ability,difficultyLabel:tr.difficulty,
-startBtn:tr.start,backBtn:tr.back,shopTitle:tr.shopTitle,
+backBtn:tr.saveBack,shopTitle:tr.shopTitle,
 skinsTab:tr.skins,aurasTab:tr.auras,shopBack:tr.back,
 pauseTitle:tr.pause,resumeBtn:tr.resume,quitBtn:tr.quit,
 retryBtn:tr.retry,endMenuBtn:tr.quit,
@@ -351,7 +367,13 @@ clearTimeout(noticeTimer);
 noticeTimer=setTimeout(()=>$("notice").textContent="",2200);
 }
 
-$("playBtn").onclick=()=>showScreen("options");
+$("playBtn").onclick=()=>{mode="classic";startGame()};
+$("modesMenuBtn").onclick=()=>showScreen("modesMenu");
+$("modesBackBtn").onclick=()=>showScreen("main");
+$("hockeyMenuBtn").onclick=()=>showScreen("hockeyMenu");
+$("hockeyStartBtn").onclick=()=>{mode="hockey";startGame()};
+$("hockeyBackBtn").onclick=()=>showScreen("modesMenu");
+$("settingsBtn").onclick=()=>showScreen("options");
 $("backBtn").onclick=()=>showScreen("main");
 $("shopBtn").onclick=()=>{renderShop();showScreen("shop")};
 $("shopBack").onclick=()=>showScreen("main");
@@ -365,8 +387,9 @@ button.classList.add("selected");
 callback(button.dataset[property]);
 });
 }
-choose(".mode","mode",v=>{mode=v;updateRecord()});
-choose(".difficulty","diff",v=>difficulty=v);
+
+choose(".difficulty","diff",v=>{difficulty=v;save("nd_difficulty",v)});
+document.querySelectorAll(".difficulty").forEach(b=>b.classList.toggle("selected",b.dataset.diff===difficulty));
 choose(".skill","skill",v=>skill=v);
 
 $("volume").oninput=e=>{
@@ -466,7 +489,7 @@ y:random(100,MAP_SIZE-100),
 radius:Math.random()>.4?random(10,25):random(18,53),
 color:["#ff3355","#ffee33","#00ffff","#ff9900","#44ff99","#bb44ff"][Math.floor(Math.random()*6)],
 angle:random(0,Math.PI*2),
-targetTimer:Math.floor(random(0,12))
+targetTimer:Math.floor(random(0,12)),targetAngle:random(0,Math.PI*2),wanderAngle:random(0,Math.PI*2),vx:0,vy:0
 };
 }
 function blocked(x,y,r){
@@ -485,7 +508,7 @@ if(!blocked(nx,ny,35)){x=nx;y=ny;break}
 player={x,y,radius:15,color:skin,angle:0,baseSpeed:4.5,trail:[]};
 }
 function startGame(){
-MAP_SIZE=mode==="survival"?2500:mode==="pacman"?2000:3000;
+MAP_SIZE=3000;
 bots=[];food=[];guards=[];walls=[];particles=[];
 frame=0;zoom=1;spawnProtection=180;
 dashCooldown=0;skillCooldown=0;skillTimer=0;
@@ -499,10 +522,10 @@ for(let i=0;i<3;i++)guards.push({
 x:random(200,MAP_SIZE-200),y:random(200,MAP_SIZE-200),
 radius:20,speed:1.5+i*.2,angle:0
 });
-}else{
-for(let i=0;i<(mode==="survival"?35:22);i++)bots.push(createBot());
+}else if(mode==="classic"){
+for(let i=0;i<22;i++)bots.push(createBot());
 }
-for(let i=0;i<(mode==="pacman"?120:380);i++)food.push(createFood());
+if(mode==="classic")for(let i=0;i<380;i++)food.push(createFood());
 spawnPlayer();
 if(arcadeModes.has(mode))initArcade();else arcadeStatus("");
 running=true;paused=false;
@@ -510,7 +533,7 @@ $("modeHud").textContent=mode.toUpperCase();
 updateRecord();updateScore();refreshCoins();
 showScreen(null);resetJoystick();
 }
-$("startBtn").onclick=startGame;
+
 $("retryBtn").onclick=startGame;
 
 function gameOver(win=false){
@@ -853,56 +876,100 @@ refreshCoins();
 if(frame%6===0)sound(1000,.045);
 }
 }
+// AI inspirat din comportamentul Agar.io: cauta hrana, evita amenintarile,
+// vaneaza tinte mici, se fereste de margini si se lupta cu alti boti.
+const classicAI={
+ easy:{speed:.79,view:205,think:24,steer:.065,bravery:.82,foodBias:1.5},
+ mid:{speed:1.0,view:300,think:12,steer:.115,bravery:1,foodBias:1.15},
+ hard:{speed:1.23,view:405,think:6,steer:.20,bravery:1.18,foodBias:.85}
+};
 function updateBots(){
-const multiplier=difficulty==="easy"?.6:difficulty==="hard"?1.2:.9;
-for(let i=bots.length-1;i>=0;i--){
-const b=bots[i];
-const speed=Math.max(.6,18/b.radius*multiplier);
-const d2=distance2(player,b);
-if(spawnProtection===0&&b.radius>player.radius*1.05&&d2<160000){
-b.angle=Math.atan2(player.y-b.y,player.x-b.x);
-}else if(player.radius>b.radius*1.05&&d2<62500){
-b.angle=Math.atan2(b.y-player.y,b.x-player.x);
-}else if(--b.targetTimer<=0){
-b.targetTimer=8+Math.floor(random(0,10));
-let closest=null,best=40000;
-for(const f of food){
-const fd=distance2(b,f);
-if(fd<best){best=fd;closest=f}
-}
-if(closest)b.angle=Math.atan2(closest.y-b.y,closest.x-b.x);
-else b.angle+=random(-.6,.6);
-}
-if(freezeTimer===0){
-b.x+=Math.cos(b.angle)*speed;
-b.y+=Math.sin(b.angle)*speed;
-}
-b.x=clamp(b.x,b.radius,MAP_SIZE-b.radius);
-b.y=clamp(b.y,b.radius,MAP_SIZE-b.radius);
-
-// Boții verifică hrana doar o dată la 3 cadre.
-if(frame%3===i%3){
-for(let j=0;j<food.length;j++){
-const f=food[j],reach=b.radius+f.radius;
-if(distance2(b,f)<reach*reach){
-b.radius+=.15;
-food[j]=createFood();
-break;
-}
-}
-}
-const reach=player.radius+b.radius;
-if(spawnProtection===0&&distance2(player,b)<reach*reach){
-if(player.radius>b.radius*1.05){
-player.radius+=b.radius*.35;
-burst(b.x,b.y,b.color,14);
-bots[i]=createBot();
-sound(1200,.14);
-}else if(b.radius>player.radius*1.05&&!(skill==="ghost"&&skillTimer>0)){
-gameOver(false);return;
-}
-}
-}
+ const cfg=classicAI[difficulty]||classicAI.mid;
+ for(let i=bots.length-1;i>=0;i--){
+  const b=bots[i];
+  if(!Number.isFinite(b.targetAngle))b.targetAngle=b.angle||0;
+  if(!Number.isFinite(b.vx)){b.vx=0;b.vy=0}
+  const vision=cfg.view+Math.min(125,b.radius*1.4);
+  // Deciziile se recalculeaza periodic si esalonat: performant pe Android.
+  if(--b.targetTimer<=0){
+   b.targetTimer=cfg.think+Math.floor(random(0,6));
+   let fx=0,fy=0,threat=false;
+   let bestFood=null,bestFoodD=Infinity;
+   for(let j=0;j<food.length;j+=2){
+    const f=food[j],dx=f.x-b.x,dy=f.y-b.y,d2=dx*dx+dy*dy;
+    if(d2<bestFoodD&&d2<vision*vision){bestFood=f;bestFoodD=d2}
+   }
+   if(bestFood){const d=Math.sqrt(bestFoodD)||1;fx+=(bestFood.x-b.x)/d*cfg.foodBias;fy+=(bestFood.y-b.y)/d*cfg.foodBias}
+   // Inclusiv jucatorul este perceput ca un adversar Agar.io.
+   const rivals=[player,...bots];
+   let prey=null,preyD=Infinity;
+   for(const other of rivals){
+    if(other===b)continue;
+    const dx=other.x-b.x,dy=other.y-b.y;
+    const d2=dx*dx+dy*dy;
+    if(d2>vision*vision)continue;
+    const d=Math.sqrt(d2)||1;
+    if(other.radius>b.radius*1.09){
+     const danger=Math.min(7,2.8+210/d)*(1+other.radius/Math.max(15,b.radius)*.3);
+     fx-=dx/d*danger;fy-=dy/d*danger;threat=true;
+    }else if(b.radius>other.radius*(difficulty==="hard"?1.13:1.20)&&d2<preyD){
+     prey=other;preyD=d2;
+    }else if(Math.abs(b.radius-other.radius)<7&&d<90){
+     fx-=dx/d*.65;fy-=dy/d*.65;
+    }
+   }
+   if(prey&&!threat){
+    const d=Math.sqrt(preyD)||1;
+    const chase=difficulty==="easy"?.65:difficulty==="hard"?3.4:2;
+    fx+=(prey.x-b.x)/d*chase;fy+=(prey.y-b.y)/d*chase;
+   }
+   // Evita sa ramana blocati pe peretii arenei.
+   const margin=140+b.radius;
+   if(b.x<margin)fx+=(margin-b.x)/margin*4;
+   if(b.x>MAP_SIZE-margin)fx-=(b.x-(MAP_SIZE-margin))/margin*4;
+   if(b.y<margin)fy+=(margin-b.y)/margin*4;
+   if(b.y>MAP_SIZE-margin)fy-=(b.y-(MAP_SIZE-margin))/margin*4;
+   if(Math.hypot(fx,fy)<.12){
+    b.wanderAngle=(b.wanderAngle||0)+random(-.85,.85);
+    fx=Math.cos(b.wanderAngle);fy=Math.sin(b.wanderAngle);
+   }
+   b.targetAngle=Math.atan2(fy,fx);
+  }
+  let turn=Math.atan2(Math.sin(b.targetAngle-b.angle),Math.cos(b.targetAngle-b.angle));
+  b.angle+=clamp(turn,-cfg.steer,cfg.steer);
+  const sizePenalty=Math.max(.58,Math.min(1.4,Math.sqrt(22/Math.max(12,b.radius))));
+  const speed=(1.25+sizePenalty*1.3)*cfg.speed;
+  if(freezeTimer===0){b.x+=Math.cos(b.angle)*speed;b.y+=Math.sin(b.angle)*speed}
+  b.x=clamp(b.x,b.radius,MAP_SIZE-b.radius);
+  b.y=clamp(b.y,b.radius,MAP_SIZE-b.radius);
+  // Mancarea si cresterea sunt esalonate pentru a pastra FPS-ul.
+  if(frame%3===i%3){
+   for(let j=0;j<food.length;j++){
+    const f=food[j],reach=b.radius+f.radius;
+    if(distance2(b,f)<reach*reach){b.radius+=.18;food[j]=createFood();break}
+   }
+  }
+  // Coliziuni bot-bot: cei mari ii consuma pe cei mici.
+  if(frame%4===i%4){
+   for(let j=0;j<bots.length;j++){
+    if(i===j)continue;
+    const other=bots[j];
+    if(other.radius>=b.radius*1.17&&distance2(b,other)<(other.radius+b.radius*.5)**2){
+     other.radius+=b.radius*.22;burst(b.x,b.y,b.color,5);bots[i]=createBot();break;
+    }
+   }
+   if(bots[i]!==b)continue;
+  }
+  const reach=player.radius+b.radius;
+  if(spawnProtection===0&&distance2(player,b)<reach*reach){
+   if(player.radius>b.radius*1.07){
+    player.radius+=b.radius*.35;burst(b.x,b.y,b.color,14);
+    bots[i]=createBot();sound(1200,.14);
+   }else if(b.radius>player.radius*1.07&&!(skill==="ghost"&&skillTimer>0)){
+    gameOver(false);return;
+   }
+  }
+ }
 }
 function updateGuards(){
 for(const g of guards){
@@ -1095,41 +1162,73 @@ function updateArcade(){
  }else if(mode==="hockey"){
   const p=arcade.puck,e=arcade.enemy;
   if(arcade.goalCooldown>0)arcade.goalCooldown--;
-  // AI activ: anticipeaza pucul, il urmareste si revine sa apere poarta.
-  const difficultySpeed=difficulty==="hard"?6.8:difficulty==="easy"?4.0:5.4;
-  const prediction=difficulty==="hard"?16:difficulty==="easy"?6:11;
-  const approaching=p.y<MAP_SIZE*.69 || p.vy<-.7;
-  let targetX,targetY;
-  if(approaching){
-   targetX=clamp(p.x+p.vx*prediction,95,MAP_SIZE-95);
-   targetY=clamp(p.y-48+p.vy*prediction*.3,105,MAP_SIZE*.52);
-  }else{
-   // Patruleaza in fata portii, nu ramane nemiscat.
-   targetX=clamp(MAP_SIZE/2+(p.x-MAP_SIZE/2)*.65+Math.sin(frame*.035)*35,170,MAP_SIZE-170);
-   targetY=MAP_SIZE*.24+Math.sin(frame*.045)*25;
+  const ai={
+   easy:{speed:3.3,look:5,error:68,react:18,attack:.68,guard:.43},
+   mid:{speed:5.2,look:12,error:23,react:8,attack:1,guard:.55},
+   hard:{speed:7.4,look:22,error:3,react:3,attack:1.24,guard:.63}
+  }[difficulty]||{speed:5.2,look:12,error:23,react:8,attack:1,guard:.55};
+  // Proiectie cu reflexii de pereti, nu simpla urmarire a pucului.
+  function projectedPuckX(t){
+   let x=p.x+p.vx*t;
+   const low=70,high=MAP_SIZE-70,range=high-low;
+   x=(x-low)%(range*2);
+   if(x<0)x+=range*2;
+   return low+(x>range?range*2-x:x);
   }
-  const ex=targetX-e.x,ey=targetY-e.y,ed=Math.hypot(ex,ey)||1;
-  const step=Math.min(difficultySpeed,ed);
+  if(e.aiTimer===undefined)e.aiTimer=0;
+  if(--e.aiTimer<=0){
+   e.aiTimer=ai.react;
+   const danger=p.y<MAP_SIZE*.60||p.vy<-.7;
+   const interceptX=projectedPuckX(ai.look);
+   const noise=Math.sin(frame*.073+e.x*.011)*ai.error;
+   if(danger){
+    e.targetX=clamp(interceptX+noise,90,MAP_SIZE-90);
+    e.targetY=clamp(p.y+p.vy*ai.look*.45-37,110,MAP_SIZE*.50);
+   }else{
+    e.targetX=clamp(MAP_SIZE/2+(p.x-MAP_SIZE/2)*ai.guard+noise*.4,155,MAP_SIZE-155);
+    e.targetY=MAP_SIZE*.22;
+   }
+   if(Math.hypot(p.x-e.x,p.y-e.y)<175){
+    e.targetX=clamp(interceptX+noise*.2,85,MAP_SIZE-85);
+    e.targetY=clamp(p.y-30,80,MAP_SIZE*.51);
+   }
+  }
+  const ex=(e.targetX??500)-e.x,ey=(e.targetY??220)-e.y,ed=Math.hypot(ex,ey)||1;
+  const step=Math.min(ai.speed,ed);
   e.x+=ex/ed*step;e.y+=ey/ed*step;
   e.angle=Math.atan2(p.y-e.y,p.x-e.x);
-  e.x=clamp(e.x,90,MAP_SIZE-90);e.y=clamp(e.y,90,MAP_SIZE*.54);
-  for(const [orb,power] of [[player,1],[e,difficulty==="hard"?1.65:1.35]]){
+  e.x=clamp(e.x,90,MAP_SIZE-90);e.y=clamp(e.y,85,MAP_SIZE*.54);
+  // Reflexie fizica a pucului si suturi directionate spre poarta.
+  for(const orb of [player,e]){
    const dx=p.x-orb.x,dy=p.y-orb.y,dist=Math.hypot(dx,dy)||1;
    if(dist<orb.radius+15){
-    p.vx=dx/dist*(7*power)+(orb===player?(joystick.x||0)*3:(MAP_SIZE/2-p.x)*.008);
-    p.vy=orb===e?Math.abs(dy/dist)*(7*power)+3:dy/dist*(7*power)+(joystick.y||0)*3;
-    p.x=orb.x+dx/dist*(orb.radius+16);p.y=orb.y+dy/dist*(orb.radius+16);
+    let nx=dx/dist,ny=dy/dist;
+    if(orb===e){
+     const goalX=MAP_SIZE/2+(difficulty==="hard"?Math.sin(frame*.019)*95:0);
+     const gx=goalX-p.x,gy=MAP_SIZE-p.y;
+     const gd=Math.hypot(gx,gy)||1;
+     nx=nx*.35+gx/gd*.65;ny=Math.abs(ny)*.2+gy/gd*.8;
+     const nd=Math.hypot(nx,ny)||1;nx/=nd;ny/=nd;
+     const force=8.1*ai.attack;
+     p.vx=nx*force;p.vy=Math.max(3,ny*force);
+    }else{
+     const jx=joystick.x||0,jy=joystick.y||0;
+     p.vx=nx*7.7+jx*3.5;p.vy=ny*7.7+jy*3.5;
+    }
+    p.x=orb.x+dx/dist*(orb.radius+16);
+    p.y=orb.y+dy/dist*(orb.radius+16);
    }
   }
   if(arcade.goalCooldown===0){p.x+=p.vx;p.y+=p.vy}
-  p.vx*=.995;p.vy*=.995;
-  if(p.x<70||p.x>MAP_SIZE-70){p.x=clamp(p.x,70,MAP_SIZE-70);p.vx*=-.9}
+  p.vx*=.996;p.vy*=.996;
+  if(p.x<70||p.x>MAP_SIZE-70){p.x=clamp(p.x,70,MAP_SIZE-70);p.vx*=-.94}
   if(p.y<60||p.y>MAP_SIZE-60){
    if(Math.abs(p.x-MAP_SIZE/2)<145&&arcade.goalCooldown===0){
     if(p.y<60){arcade.goals++;notify("GOL! +1")}
     else{arcade.enemyGoals++;notify("GOL ADVERSAR!")}
     resetPuck();player.x=MAP_SIZE/2;player.y=MAP_SIZE*.77;
-   }else{p.y=clamp(p.y,60,MAP_SIZE-60);p.vy*=-.9}
+    e.x=MAP_SIZE/2;e.y=MAP_SIZE*.23;e.aiTimer=0;
+   }else{p.y=clamp(p.y,60,MAP_SIZE-60);p.vy*=-.94}
   }
   arcadeScore(arcade.goals);
   arcadeStatus("🏒 TU "+arcade.goals+" : "+arcade.enemyGoals+" AI");
