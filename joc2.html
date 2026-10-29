@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ro">
 <head>
@@ -10,7 +9,7 @@
 :root{--cyan:#49caff;--dark:#02040b;--bottom:env(safe-area-inset-bottom,0px);--left:env(safe-area-inset-left,0px);--right:env(safe-area-inset-right,0px)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--dark);color:white;font-family:Arial,sans-serif;overscroll-behavior:none}
-body{position:fixed;inset:0}
+body{position:fixed;inset:0;touch-action:none;-webkit-user-select:none;user-select:none}
 canvas{display:block;touch-action:none}
 #game{position:fixed;inset:0;width:100%;height:100%;z-index:0}
 .hidden{display:none!important}
@@ -524,47 +523,58 @@ joystick.x=0;joystick.y=0;
 }
 knob.style.transform=`translate3d(${joystick.x*max}px,${joystick.y*max}px,0)`;
 }
-if(window.PointerEvent){
-joyElement.addEventListener("pointerdown",e=>{
-if(!running||paused||joystick.active)return;
-e.preventDefault();e.stopPropagation();
-joystick.active=true;joystick.pointerId=e.pointerId;
-setJoystickPosition(e.clientX,e.clientY);
-try{joyElement.setPointerCapture(e.pointerId)}catch{}
+// Android WebView / APK: touch events are the primary control path.
+// The finger remains tracked even if it moves outside the joystick circle.
+function joystickTouchStart(e){
+ if(!running||paused||joystick.active)return;
+ const touch=e.changedTouches[0];
+ if(!touch)return;
+ e.preventDefault();e.stopPropagation();
+ joystick.active=true;
+ joystick.touchId=touch.identifier;
+ setJoystickPosition(touch.clientX,touch.clientY);
+}
+function joystickTouchMove(e){
+ if(!joystick.active||joystick.touchId===null)return;
+ for(const touch of e.changedTouches){
+  if(touch.identifier===joystick.touchId){
+   e.preventDefault();
+   setJoystickPosition(touch.clientX,touch.clientY);
+   break;
+  }
+ }
+}
+function joystickTouchEnd(e){
+ if(!joystick.active||joystick.touchId===null)return;
+ for(const touch of e.changedTouches){
+  if(touch.identifier===joystick.touchId){
+   e.preventDefault();
+   resetJoystick();
+   break;
+  }
+ }
+}
+joyElement.addEventListener("touchstart",joystickTouchStart,{passive:false});
+document.addEventListener("touchmove",joystickTouchMove,{passive:false});
+document.addEventListener("touchend",joystickTouchEnd,{passive:false});
+document.addEventListener("touchcancel",joystickTouchEnd,{passive:false});
+
+// Mouse fallback for desktop; ignore synthesized mouse events after touch.
+let lastTouchTime=0;
+joyElement.addEventListener("touchstart",()=>{lastTouchTime=Date.now()},{passive:true});
+joyElement.addEventListener("mousedown",e=>{
+ if(Date.now()-lastTouchTime<800||!running||paused||e.button!==0)return;
+ e.preventDefault();
+ joystick.active=true;
+ joystick.pointerId="mouse";
+ setJoystickPosition(e.clientX,e.clientY);
 });
-joyElement.addEventListener("pointermove",e=>{
-if(joystick.active&&e.pointerId===joystick.pointerId){
-e.preventDefault();setJoystickPosition(e.clientX,e.clientY);
-}
+document.addEventListener("mousemove",e=>{
+ if(joystick.active&&joystick.pointerId==="mouse")setJoystickPosition(e.clientX,e.clientY);
 });
-function stopPointer(e){
-if(e.pointerId===joystick.pointerId)resetJoystick();
-}
-joyElement.addEventListener("pointerup",stopPointer);
-joyElement.addEventListener("pointercancel",stopPointer);
-joyElement.addEventListener("lostpointercapture",stopPointer);
-}else{
-joyElement.addEventListener("touchstart",e=>{
-if(!running||paused||joystick.active)return;
-const touch=e.changedTouches[0];
-if(!touch)return;
-e.preventDefault();
-joystick.active=true;joystick.touchId=touch.identifier;
-setJoystickPosition(touch.clientX,touch.clientY);
-},{passive:false});
-joyElement.addEventListener("touchmove",e=>{
-for(const touch of e.changedTouches)
-if(touch.identifier===joystick.touchId){
-e.preventDefault();setJoystickPosition(touch.clientX,touch.clientY);
-}
-},{passive:false});
-function stopTouch(e){
-for(const touch of e.changedTouches)
-if(touch.identifier===joystick.touchId){resetJoystick();break}
-}
-joyElement.addEventListener("touchend",stopTouch);
-joyElement.addEventListener("touchcancel",stopTouch);
-}
+document.addEventListener("mouseup",()=>{
+ if(joystick.pointerId==="mouse")resetJoystick();
+});
 joyElement.addEventListener("contextmenu",e=>e.preventDefault());
 
 let keys={};
@@ -757,11 +767,18 @@ if(dashTimer>0)speed*=2.2;
 if(skill==="giant"&&skillTimer>0)speed*=.8;
 const nx=clamp(player.x+dx*speed,player.radius,MAP_SIZE-player.radius);
 const ny=clamp(player.y+dy*speed,player.radius,MAP_SIZE-player.radius);
+const oldX=player.x,oldY=player.y;
 if(!blocked(nx,player.y,player.radius))player.x=nx;
 if(!blocked(player.x,ny,player.radius))player.y=ny;
-if(length>0&&frame%2===0){
+// Urma apare numai dacă personajul chiar se deplasează.
+if((player.x!==oldX||player.y!==oldY)&&frame%2===0){
 player.trail.push({x:player.x,y:player.y,radius:player.radius,life:12});
 if(player.trail.length>8)player.trail.shift();
+}
+// Urmele vechi se sting inclusiv când joystickul este eliberat.
+for(let i=player.trail.length-1;i>=0;i--){
+player.trail[i].life--;
+if(player.trail[i].life<=0)player.trail.splice(i,1);
 }
 }
 
