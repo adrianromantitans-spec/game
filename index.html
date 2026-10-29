@@ -178,6 +178,8 @@ let quality=1;
 let slowFrames=0;
 let fastFrames=0;
 let floorGradient=null;
+// Camera Classic cu zonă liberă: arena rămâne fixă până când personajul ajunge aproape de marginea ecranului.
+let cameraX=1500,cameraY=1500;
 
 function resize(){
 W=innerWidth;
@@ -632,6 +634,7 @@ for(let i=0;i<22;i++)bots.push(createBot());
 }
 if(mode==="classic")for(let i=0;i<380;i++)food.push(createFood());
 spawnPlayer();
+cameraX=player.x;cameraY=player.y;
 if(arcadeModes.has(mode)){initArcade();zoom=hockeyViewScale();notify("🏒 Glisează degetul pe teren pentru a mișca paleta!");}else arcadeStatus("");
 running=true;paused=false;
 $("modeHud").textContent=mode.toUpperCase();
@@ -874,8 +877,8 @@ ctx.fill();
 function drawFloor(){
 ctx.fillStyle=floorGradient||"#040813";ctx.fillRect(0,0,W,H);
 const spacing=Math.max(35,100*zoom);
-const ox=((-player.x*zoom)%spacing+spacing)%spacing;
-const oy=((-player.y*zoom)%spacing+spacing)%spacing;
+const ox=((-cameraX*zoom)%spacing+spacing)%spacing;
+const oy=((-cameraY*zoom)%spacing+spacing)%spacing;
 ctx.strokeStyle="#22a5e526";
 ctx.lineWidth=1;
 ctx.beginPath();
@@ -883,8 +886,21 @@ for(let x=ox;x<W;x+=spacing){ctx.moveTo(x,0);ctx.lineTo(x,H)}
 for(let y=oy;y<H;y+=spacing){ctx.moveTo(0,y);ctx.lineTo(W,y)}
 ctx.stroke();
 }
-function screenX(x){return(x-(mode==="hockey"?500:player.x))*zoom+W/2}
-function screenY(y){return(y-(mode==="hockey"?500:player.y))*zoom+H/2}
+function screenX(x){return(x-(mode==="hockey"?500:cameraX))*zoom+W/2}
+function screenY(y){return(y-(mode==="hockey"?500:cameraY))*zoom+H/2}
+function updateClassicCamera(){
+ if(mode==="hockey")return; // Hockey: masa este complet fixa.
+ // Jucatorul se misca liber in 50% din centrul ecranului.
+ const halfW=Math.max(38,W*.24),halfH=Math.max(48,H*.24);
+ const px=(player.x-cameraX)*zoom,py=(player.y-cameraY)*zoom;
+ if(px>halfW)cameraX+=(px-halfW)/zoom;
+ else if(px< -halfW)cameraX+=(px+halfW)/zoom;
+ if(py>halfH)cameraY+=(py-halfH)/zoom;
+ else if(py< -halfH)cameraY+=(py+halfH)/zoom;
+ // Limite pentru ca arena sa nu sara brusc spre exterior.
+ cameraX=clamp(cameraX,0,MAP_SIZE);
+ cameraY=clamp(cameraY,0,MAP_SIZE);
+}
 function visible(x,y,r=30){
 return x>-r&&y>-r&&x<W+r&&y<H+r;
 }
@@ -1171,6 +1187,7 @@ bossSpawned=true;notify(t().bossNotice);
 }
 const targetZoom=Math.max(.25,30/player.radius);
 zoom+=(targetZoom-zoom)*.1;
+updateClassicCamera();
 updateScore();
 if(player.radius>=200||(mode==="pacman"&&food.length===0)){
 gameOver(true);return;
@@ -1218,7 +1235,7 @@ ctx.fillStyle=p.color;
 ctx.fillRect(x,y,Math.max(2,3*zoom),Math.max(2,3*zoom));
 }
 ctx.globalAlpha=1;
-const cx=mode==="hockey"?screenX(player.x):W/2,cy=mode==="hockey"?screenY(player.y):H/2;
+const cx=screenX(player.x),cy=screenY(player.y);
 let r=player.radius*zoom;
 if(skill==="giant"&&skillTimer>0)r*=1.5;
 if(spawnProtection>0){
