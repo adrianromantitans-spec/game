@@ -770,10 +770,20 @@ const ny=clamp(player.y+dy*speed,player.radius,MAP_SIZE-player.radius);
 const oldX=player.x,oldY=player.y;
 if(!blocked(nx,player.y,player.radius))player.x=nx;
 if(!blocked(player.x,ny,player.radius))player.y=ny;
-// Urma apare numai dacă personajul chiar se deplasează.
-if((player.x!==oldX||player.y!==oldY)&&frame%2===0){
-player.trail.push({x:player.x,y:player.y,radius:player.radius,life:12});
-if(player.trail.length>8)player.trail.shift();
+// Urma neon exista DOAR cat timp personajul se deplaseaza.
+const moving=Math.hypot(player.x-oldX,player.y-oldY)>0.01;
+if(!moving){
+player.trail.length=0;
+}else{
+if(frame%2===0){
+player.trail.push({x:oldX,y:oldY,radius:player.radius,life:18});
+if(player.trail.length>12)player.trail.shift();
+}
+for(let i=player.trail.length-1;i>=0;i--){
+player.trail[i].life--;
+if(player.trail[i].life<=0)player.trail.splice(i,1);
+}
+}
 }
 // Urmele vechi se sting inclusiv când joystickul este eliberat.
 for(let i=player.trail.length-1;i>=0;i--){
@@ -916,10 +926,10 @@ drawFloor();
 if(mode==="pacman")drawWalls();
 for(const trail of player.trail){
 const x=screenX(trail.x),y=screenY(trail.y);
-ctx.globalAlpha=Math.max(0,trail.life/32);
+ctx.globalAlpha=Math.max(0,trail.life/18)*.52;
 ctx.fillStyle="#44aaff";
 ctx.beginPath();
-ctx.arc(x,y,trail.radius*.8*zoom,0,TAU);
+ctx.arc(x,y,trail.radius*.72*zoom,0,TAU);
 ctx.fill();
 }
 ctx.globalAlpha=1;
