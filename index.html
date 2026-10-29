@@ -785,13 +785,6 @@ if(player.trail[i].life<=0)player.trail.splice(i,1);
 }
 }
 }
-// Urmele vechi se sting inclusiv când joystickul este eliberat.
-for(let i=player.trail.length-1;i>=0;i--){
-player.trail[i].life--;
-if(player.trail[i].life<=0)player.trail.splice(i,1);
-}
-}
-
 // COLIZIUNI RAPIDE: evităm sqrt pentru fiecare punct.
 function updateFood(){
 let collected=0;
