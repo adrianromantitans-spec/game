@@ -77,7 +77,7 @@ label{color:#aac4d7;font-size:13px}
 
 <div id="main" class="overlay">
 <h1>NEON DEVORATOR</h1>
-<div style="color:#49caff;font-size:12px;font-weight:bold">VERSIUNE HOCKEY 4 · FĂRĂ DIAGNOSTIC</div>
+
 <p id="mainDescription">Crește, devorează adversarii și domină arena!</p>
 <div class="row">
 <button class="lang selected" data-lang="ro">RO</button>
@@ -423,12 +423,13 @@ function initArcade(){
  if(mode==="hockey"){
   MAP_SIZE=1000;bots=[];food=[];
   player.x=MAP_SIZE/2;player.y=MAP_SIZE*.77;player.radius=26;player.baseSpeed=6;
-  arcade.enemy={x:MAP_SIZE/2,y:MAP_SIZE*.23,radius:28,color:"#ff3355",angle:0};
+  arcade.enemy={x:MAP_SIZE/2,y:MAP_SIZE*.23,radius:28,color:"#ff3355",angle:0,strafe:1,aiTimer:0};
   resetPuck();
  }
 }
 function resetPuck(){
- arcade.puck={x:MAP_SIZE/2,y:MAP_SIZE/2,vx:random(-1,1),vy:random(-1,1)};
+ arcade.puck={x:MAP_SIZE/2,y:MAP_SIZE/2,vx:random(-2.5,2.5),vy:random(-3.5,3.5)};
+ if(Math.abs(arcade.puck.vy)<1.5)arcade.puck.vy=arcade.puck.vy<0?-2.5:2.5;
  arcade.goalCooldown=65;
 }
 
@@ -1094,17 +1095,29 @@ function updateArcade(){
  }else if(mode==="hockey"){
   const p=arcade.puck,e=arcade.enemy;
   if(arcade.goalCooldown>0)arcade.goalCooldown--;
-  const difficultySpeed=difficulty==="hard"?4.2:difficulty==="easy"?2.4:3.2;
-  const targetX=clamp(p.x,90,MAP_SIZE-90),targetY=clamp(p.y-65,90,MAP_SIZE*.46);
+  // AI activ: anticipeaza pucul, il urmareste si revine sa apere poarta.
+  const difficultySpeed=difficulty==="hard"?6.8:difficulty==="easy"?4.0:5.4;
+  const prediction=difficulty==="hard"?16:difficulty==="easy"?6:11;
+  const approaching=p.y<MAP_SIZE*.69 || p.vy<-.7;
+  let targetX,targetY;
+  if(approaching){
+   targetX=clamp(p.x+p.vx*prediction,95,MAP_SIZE-95);
+   targetY=clamp(p.y-48+p.vy*prediction*.3,105,MAP_SIZE*.52);
+  }else{
+   // Patruleaza in fata portii, nu ramane nemiscat.
+   targetX=clamp(MAP_SIZE/2+(p.x-MAP_SIZE/2)*.65+Math.sin(frame*.035)*35,170,MAP_SIZE-170);
+   targetY=MAP_SIZE*.24+Math.sin(frame*.045)*25;
+  }
   const ex=targetX-e.x,ey=targetY-e.y,ed=Math.hypot(ex,ey)||1;
-  e.x+=ex/ed*Math.min(difficultySpeed,ed);
-  e.y+=ey/ed*Math.min(difficultySpeed,ed);
-  e.x=clamp(e.x,90,MAP_SIZE-90);e.y=clamp(e.y,90,MAP_SIZE*.46);
-  for(const [orb,power] of [[player,1],[e,1.1]]){
+  const step=Math.min(difficultySpeed,ed);
+  e.x+=ex/ed*step;e.y+=ey/ed*step;
+  e.angle=Math.atan2(p.y-e.y,p.x-e.x);
+  e.x=clamp(e.x,90,MAP_SIZE-90);e.y=clamp(e.y,90,MAP_SIZE*.54);
+  for(const [orb,power] of [[player,1],[e,difficulty==="hard"?1.65:1.35]]){
    const dx=p.x-orb.x,dy=p.y-orb.y,dist=Math.hypot(dx,dy)||1;
    if(dist<orb.radius+15){
-    p.vx=dx/dist*(7*power)+(orb===player?(joystick.x||0)*3:0);
-    p.vy=dy/dist*(7*power)+(orb===player?(joystick.y||0)*3:0);
+    p.vx=dx/dist*(7*power)+(orb===player?(joystick.x||0)*3:(MAP_SIZE/2-p.x)*.008);
+    p.vy=orb===e?Math.abs(dy/dist)*(7*power)+3:dy/dist*(7*power)+(joystick.y||0)*3;
     p.x=orb.x+dx/dist*(orb.radius+16);p.y=orb.y+dy/dist*(orb.radius+16);
    }
   }
