@@ -11,7 +11,7 @@
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--dark);color:white;font-family:Arial,sans-serif;overscroll-behavior:none}
 body{position:fixed;inset:0;touch-action:none;-webkit-user-select:none;user-select:none}
 canvas{display:block;touch-action:none}
-#game{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+#game{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:auto}
 .hidden{display:none!important}
 button{cursor:pointer;border:2px solid var(--cyan);border-radius:20px;background:#071b30;color:#66d9ff;font-weight:bold;padding:11px 18px;min-width:130px;touch-action:manipulation}
 button.selected,button:active{background:var(--cyan);color:#02111e}
@@ -55,6 +55,7 @@ label{color:#aac4d7;font-size:13px}
 }
 #main>button{width:min(320px,88vw);min-height:52px;font-size:16px}#modesMenu>button,#hockeyMenu>button{width:min(320px,88vw);min-height:52px}#main #playBtn{font-size:19px;box-shadow:0 0 21px #49caff36}#modesMenuBtn,#hockeyMenuBtn{border-color:#ff4f88;color:#ff9fbe;background:#2a0b1e}#settingsBtn{border-color:#9a80ff;color:#ccbaff}.hockey-preview{font-size:52px;padding:14px 0;color:white}.hockey-preview span{font-size:18px;color:#a6bdd1;vertical-align:middle}.overlay{padding-top:max(20px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom))}#options{justify-content:flex-start}#options h1{margin-top:15px}#options .row{margin-bottom:10px}#options label{font-size:15px}#options input{width:min(300px,80vw)}
 #hockeyMenu .row button{min-width:115px;font-size:12px;padding:11px 10px}
+#hockeyTouchSurface{position:fixed;inset:0;z-index:9;touch-action:none!important;overscroll-behavior:none;background:transparent;-webkit-user-select:none;user-select:none}#hockeyTouchSurface.hidden{display:none!important}
 #hockeyRecord{color:#8de5ff!important}
 #hockeyStats{max-width:360px;padding:8px 14px;background:#061728;border-radius:12px}
 </style>
@@ -72,6 +73,7 @@ label{color:#aac4d7;font-size:13px}
 </div>
 
 <div id="notice"></div>
+<div id="hockeyTouchSurface" class="hidden" aria-label="Controlează paleta Air Hockey cu degetul"></div>
 <button class="control" id="pauseBtn">Ⅱ</button>
 <button class="control" id="dashBtn">DASH</button>
 <button class="control" id="skillBtn">⚡</button>
@@ -303,6 +305,7 @@ const playing=id===null;
 ["hud","minimap","pauseBtn","dashBtn","skillBtn","splitBtn","freezeBtn","joy"]
 .forEach(name=>$(name).classList.toggle("hidden",!playing || (mode==="hockey" && name!=="hud" && name!=="pauseBtn")));
 if(playing&&mode==="hockey")$("minimap").classList.add("hidden");
+$("hockeyTouchSurface").classList.toggle("hidden",!(playing&&mode==="hockey"));
 }
 
 function translateGame(){
@@ -530,12 +533,12 @@ function hockeyTouchEnd(e){
 document.addEventListener("touchend",hockeyTouchEnd,{passive:true,capture:true});
 document.addEventListener("touchcancel",hockeyTouchEnd,{passive:true,capture:true});
 // Pointer Events pentru stylus si browsere care nu au Touch Events.
-canvas.addEventListener("pointerdown",e=>{
+$("hockeyTouchSurface").addEventListener("pointerdown",e=>{
  if(!hockeyCanTouch(e.target)||hockeyTouch.active)return;
  if(e.pointerType==="mouse"&&e.button!==0)return;
  hockeyTouch.active=true;hockeyTouch.kind="pointer";hockeyTouch.id=e.pointerId;
  hockeyPointerPosition(e.clientX,e.clientY);
- try{canvas.setPointerCapture(e.pointerId)}catch{}
+ try{$("hockeyTouchSurface").setPointerCapture(e.pointerId)}catch{}
  if(e.cancelable)e.preventDefault();
 });
 document.addEventListener("pointermove",e=>{
@@ -623,7 +626,7 @@ for(let i=0;i<22;i++)bots.push(createBot());
 }
 if(mode==="classic")for(let i=0;i<380;i++)food.push(createFood());
 spawnPlayer();
-if(arcadeModes.has(mode))initArcade();else arcadeStatus("");
+if(arcadeModes.has(mode)){initArcade();notify("🏒 Glisează degetul pe teren pentru a mișca paleta!");}else arcadeStatus("");
 running=true;paused=false;
 $("modeHud").textContent=mode.toUpperCase();
 updateRecord();updateScore();refreshCoins();
@@ -1442,7 +1445,7 @@ function updateArcade(){
   if(bots.length===0)arcadeEnd(true,"Ești ultimul supraviețuitor!",150);
  }
  if(running){
-  const targetZoom=mode==="hockey"?Math.min(W/960,H/1020):Math.max(.38,30/player.radius);
+  const targetZoom=mode==="hockey"?Math.min(W/940,H/980):Math.max(.38,30/player.radius);
   zoom+=(targetZoom-zoom)*.08;
   if(frame%15===0){$("dashBtn").style.opacity=dashCooldown>0?".5":"1";$("skillBtn").style.opacity=skillCooldown>0?".5":"1"}
  }
