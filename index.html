@@ -682,6 +682,19 @@ resetJoystick();showScreen("main");
 
 const joyElement=$("joy"),knob=$("knob");
 const joystick={active:false,pointerId:null,touchId:null,x:0,y:0};
+function placeFloatingJoystick(x,y){
+ const r=joyElement.getBoundingClientRect().width/2;
+ const centerX=clamp(x,r+6,innerWidth-r-6);
+ const centerY=clamp(y,r+6,innerHeight-r-6);
+ joyElement.style.left=(centerX-r)+"px";
+ joyElement.style.top=(centerY-r)+"px";
+ joyElement.style.bottom="auto";
+}
+function restoreJoystickPosition(){
+ joyElement.style.left="";
+ joyElement.style.top="";
+ joyElement.style.bottom="";
+}
 
 function resetJoystick(){
 joystick.active=false;
@@ -689,6 +702,7 @@ joystick.pointerId=null;
 joystick.touchId=null;
 joystick.x=0;joystick.y=0;
 if(knob)knob.style.transform="translate3d(0,0,0)";
+restoreJoystickPosition();
 }
 function setJoystickPosition(clientX,clientY){
 const rect=joyElement.getBoundingClientRect();
@@ -707,12 +721,13 @@ knob.style.transform=`translate3d(${joystick.x*max}px,${joystick.y*max}px,0)`;
 // Android WebView / APK: touch events are the primary control path.
 // The finger remains tracked even if it moves outside the joystick circle.
 function joystickTouchStart(e){
- if(!running||paused||joystick.active)return;
+ if(!running||paused||mode==="hockey"||joystick.active)return;
  const touch=e.changedTouches[0];
  if(!touch)return;
  e.preventDefault();e.stopPropagation();
  joystick.active=true;
  joystick.touchId=touch.identifier;
+ placeFloatingJoystick(touch.clientX,touch.clientY);
  setJoystickPosition(touch.clientX,touch.clientY);
 }
 function joystickTouchMove(e){
@@ -735,7 +750,14 @@ function joystickTouchEnd(e){
   }
  }
 }
-joyElement.addEventListener("touchstart",joystickTouchStart,{passive:false});
+// Joystick mobil: poate fi pornit oriunde in jumatatea stanga-jos a ecranului.
+document.addEventListener("touchstart",e=>{
+ if(!running||paused||mode==="hockey"||joystick.active)return;
+ const touch=e.changedTouches[0];
+ if(!touch||touch.clientX>innerWidth*.53||touch.clientY<innerHeight*.38)return;
+ if(e.target.closest("button,input,.overlay"))return;
+ joystickTouchStart(e);
+},{passive:false});
 document.addEventListener("touchmove",joystickTouchMove,{passive:false});
 document.addEventListener("touchend",joystickTouchEnd,{passive:false});
 document.addEventListener("touchcancel",joystickTouchEnd,{passive:false});
@@ -917,17 +939,11 @@ ctx.stroke();
 function screenX(x){return(x-(mode==="hockey"?500:cameraX))*zoom+W/2}
 function screenY(y){return(y-(mode==="hockey"?500:cameraY))*zoom+H/2}
 function updateClassicCamera(){
- if(mode==="hockey")return; // Hockey: masa este complet fixa.
- // Jucatorul se misca liber in 50% din centrul ecranului.
- const halfW=Math.max(38,W*.24),halfH=Math.max(48,H*.24);
- const px=(player.x-cameraX)*zoom,py=(player.y-cameraY)*zoom;
- if(px>halfW)cameraX+=(px-halfW)/zoom;
- else if(px< -halfW)cameraX+=(px+halfW)/zoom;
- if(py>halfH)cameraY+=(py-halfH)/zoom;
- else if(py< -halfH)cameraY+=(py+halfH)/zoom;
- // Limite pentru ca arena sa nu sara brusc spre exterior.
- cameraX=clamp(cameraX,0,MAP_SIZE);
- cameraY=clamp(cameraY,0,MAP_SIZE);
+ // Camera originala din Classic: urmareste jucatorul in centrul ecranului.
+ if(mode!=="hockey"){
+  cameraX=player.x;
+  cameraY=player.y;
+ }
 }
 function visible(x,y,r=30){
 return x>-r&&y>-r&&x<W+r&&y<H+r;
@@ -984,7 +1000,13 @@ if(keys.s||keys.arrowdown)dy=1;
 if(keys.a||keys.arrowleft)dx=-1;
 if(keys.d||keys.arrowright)dx=1;
 const length=Math.hypot(dx,dy);
-if(length>0){dx/=length;dy/=length;player.angle=Math.atan2(dy,dx)}
+if(length>0){
+ dx/=length;dy/=length;
+ // Rotire lina a personajului in Classic, fara salt brusc la schimbarea directiei.
+ const desired=Math.atan2(dy,dx);
+ const difference=Math.atan2(Math.sin(desired-player.angle),Math.cos(desired-player.angle));
+ player.angle+=clamp(difference,-0.085,0.085);
+}
 if(mode==="snake"){
  if(length>0){
   const old=arcade.lastDir;
