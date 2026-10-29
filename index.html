@@ -64,7 +64,7 @@ label{color:#aac4d7;font-size:13px}
 <span id="sizeLabel">Mărime</span>: <span id="score">15</span> / 200<br>
 <span id="coinsText">🪙 <span id="coinsLabel">Monede</span>: <span id="coins">0</span></span><br>
 <span id="recordLabel">Record</span>: <span id="record">0</span><br>
-<span id="modeHud">CLASSIC</span>
+<span id="modeHud">CLASSIC</span><br><span id="arcadeHud"></span>
 </div>
 
 <div id="notice"></div>
@@ -95,6 +95,7 @@ label{color:#aac4d7;font-size:13px}
 <button class="mode" data-mode="survival">Survival</button>
 <button class="mode" data-mode="boss">Boss</button>
 <button class="mode" data-mode="pacman">Pac-Cyber</button>
+<button class="mode" data-mode="hockey">Neon Hockey</button>
 </div>
 <label id="abilityLabel">ABILITATE SPECIALĂ</label>
 <div class="row">
@@ -138,18 +139,8 @@ label{color:#aac4d7;font-size:13px}
 <button id="endMenuBtn">MENIU PRINCIPAL</button>
 </div>
 
-<div id="ndDiagnostic" style="position:fixed;bottom:5px;left:50%;transform:translateX(-50%);z-index:99999;background:#12334a;color:#fff;border:1px solid #49caff;border-radius:10px;padding:7px 12px;font:12px Arial;max-width:96vw;overflow-wrap:anywhere;pointer-events:none">DIAGNOSTIC: HTML încărcat · v3</div>
-<script>
-(function(){
- var el=document.getElementById('ndDiagnostic');
- window.ndStatus=function(msg,err){el.textContent='DIAGNOSTIC: '+msg;el.style.background=err?'#75152c':'#12334a';};
- window.addEventListener('error',function(e){window.ndStatus('EROARE: '+e.message+' (linia '+e.lineno+')',true);});
- window.addEventListener('unhandledrejection',function(e){window.ndStatus('PROMISE: '+String(e.reason),true);});
-})();
-</script>
 <script>
 "use strict";
-window.ndStatus("JavaScript pornit · v3");
 
 const $=id=>document.getElementById(id);
 const canvas=$("game");
@@ -359,9 +350,9 @@ clearTimeout(noticeTimer);
 noticeTimer=setTimeout(()=>$("notice").textContent="",2200);
 }
 
-$("playBtn").onclick=()=>{window.ndStatus("JOACĂ apăsat · v3");showScreen("options")};
+$("playBtn").onclick=()=>showScreen("options");
 $("backBtn").onclick=()=>showScreen("main");
-$("shopBtn").onclick=()=>{window.ndStatus("MAGAZIN apăsat · v3");renderShop();showScreen("shop")};
+$("shopBtn").onclick=()=>{renderShop();showScreen("shop")};
 $("shopBack").onclick=()=>showScreen("main");
 $("skinsTab").onclick=()=>{shopTab="skins";renderShop()};
 $("aurasTab").onclick=()=>{shopTab="auras";renderShop()};
@@ -409,6 +400,37 @@ let frame=0,zoom=1;
 let spawnProtection=0,dashCooldown=0,skillCooldown=0;
 let skillTimer=0,freezeTimer=0,dashTimer=0,bossSpawned=false;
 let coinsDirty=false,recordValue=0;
+const arcadeModes=new Set(["hockey"]);
+let arcade={};
+function arcadeReward(amount){
+ coins+=amount;coinsDirty=true;refreshCoins();notify("🪙 +"+amount);
+}
+function arcadeScore(value){
+ const current=Math.floor(value);
+ $("score").textContent=current;
+ if(current>recordValue){recordValue=current;$("record").textContent=current}
+}
+function arcadeStatus(text){$("arcadeHud").textContent=text}
+function arcadeEnd(win,detail,reward=0){
+ if(reward)arcadeReward(reward);
+ gameOver(win);
+ $("endText").textContent=detail+(reward?" | 🪙 +"+reward:"");
+}
+function initArcade(){
+ arcade={time:0,points:0,wave:1,goals:0,enemyGoals:0,goalCooldown:0,segments:[],puck:null,ring:0};
+ $("arcadeHud").textContent="";
+ if(mode==="hockey"){
+  MAP_SIZE=1000;bots=[];food=[];
+  player.x=MAP_SIZE/2;player.y=MAP_SIZE*.77;player.radius=26;player.baseSpeed=6;
+  arcade.enemy={x:MAP_SIZE/2,y:MAP_SIZE*.23,radius:28,color:"#ff3355",angle:0};
+  resetPuck();
+ }
+}
+function resetPuck(){
+ arcade.puck={x:MAP_SIZE/2,y:MAP_SIZE/2,vx:random(-1,1),vy:random(-1,1)};
+ arcade.goalCooldown=65;
+}
+
 
 function recordKey(){return "nd_rec_"+mode}
 function updateRecord(){
@@ -480,6 +502,7 @@ for(let i=0;i<(mode==="survival"?35:22);i++)bots.push(createBot());
 }
 for(let i=0;i<(mode==="pacman"?120:380);i++)food.push(createFood());
 spawnPlayer();
+if(arcadeModes.has(mode))initArcade();else arcadeStatus("");
 running=true;paused=false;
 $("modeHud").textContent=mode.toUpperCase();
 updateRecord();updateScore();refreshCoins();
@@ -772,6 +795,13 @@ if(keys.a||keys.arrowleft)dx=-1;
 if(keys.d||keys.arrowright)dx=1;
 const length=Math.hypot(dx,dy);
 if(length>0){dx/=length;dy/=length;player.angle=Math.atan2(dy,dx)}
+if(mode==="snake"){
+ if(length>0){
+  const old=arcade.lastDir;
+  if(dx*old.x+dy*old.y>-.65)arcade.lastDir={x:dx,y:dy};
+ }
+ dx=arcade.lastDir.x;dy=arcade.lastDir.y;
+}
 let speed=player.baseSpeed;
 if(dashTimer>0)speed*=2.2;
 if(skill==="giant"&&skillTimer>0)speed*=.8;
@@ -780,6 +810,10 @@ const ny=clamp(player.y+dy*speed,player.radius,MAP_SIZE-player.radius);
 const oldX=player.x,oldY=player.y;
 if(!blocked(nx,player.y,player.radius))player.x=nx;
 if(!blocked(player.x,ny,player.radius))player.y=ny;
+if(mode==="hockey"){
+ player.x=clamp(player.x,90,MAP_SIZE-90);
+ player.y=clamp(player.y,MAP_SIZE*.52,MAP_SIZE-90);
+}
 // Urma neon exista DOAR cat timp personajul se deplaseaza.
 const moving=Math.hypot(player.x-oldX,player.y-oldY)>0.01;
 if(!moving){
@@ -795,6 +829,7 @@ if(player.trail[i].life<=0)player.trail.splice(i,1);
 }
 }
 }
+
 // COLIZIUNI RAPIDE: evităm sqrt pentru fiecare punct.
 function updateFood(){
 let collected=0;
@@ -899,6 +934,11 @@ if(skillTimer>0)skillTimer--;
 if(freezeTimer>0)freezeTimer--;
 if(dashTimer>0)dashTimer--;
 movePlayer();
+if(arcadeModes.has(mode)){
+ updateArcade();
+ if(running){updateParticles();if(frame%120===0)flushProgress()}
+ return;
+}
 updateFood();
 if(mode==="pacman")updateGuards();
 else updateBots();
@@ -926,6 +966,7 @@ if(frame%120===0)flushProgress();
 }
 function drawGame(){
 drawFloor();
+if(arcadeModes.has(mode))drawArcadeExtras(false);
 if(mode==="pacman")drawWalls();
 for(const trail of player.trail){
 const x=screenX(trail.x),y=screenY(trail.y);
@@ -944,6 +985,9 @@ if(visible(x,y,r))drawFood3D(x,y,r,f.color);
 for(const b of bots){
 const x=screenX(b.x),y=screenY(b.y),r=b.radius*zoom;
 if(visible(x,y,r))drawOrb3D(x,y,r,b.color,b.angle);
+}
+if(mode==="hockey"&&arcade.enemy){
+ const e=arcade.enemy;drawOrb3D(screenX(e.x),screenY(e.y),e.radius*zoom,e.color,e.angle);
 }
 for(const g of guards){
 const x=screenX(g.x),y=screenY(g.y),r=g.radius*zoom;
@@ -977,6 +1021,7 @@ ctx.stroke();
 if(skill==="ghost"&&skillTimer>0)ctx.globalAlpha=.48;
 drawOrb3D(cx,cy,r,player.color,player.angle);
 ctx.globalAlpha=1;
+if(arcadeModes.has(mode))drawArcadeExtras(true);
 if(frame%4===0)drawMinimap();
 }
 function drawMinimap(){
@@ -988,6 +1033,161 @@ for(const b of bots)mctx.fillRect(b.x*scale,b.y*scale,2,2);
 for(const g of guards)mctx.fillRect(g.x*scale,g.y*scale,3,3);
 mctx.fillStyle="#49caff";
 mctx.fillRect(player.x*scale-2,player.y*scale-2,4,4);
+}
+
+
+// CINCI MINIGAME-URI NEON ARCADE
+function updateArcade(){
+ arcade.time++;
+ if(dashCooldown>0)dashCooldown--;
+ if(skillCooldown>0)skillCooldown--;
+ if(skillTimer>0)skillTimer--;
+ if(freezeTimer>0)freezeTimer--;
+ if(dashTimer>0)dashTimer--;
+ if(spawnProtection>0)spawnProtection--;
+ if(mode==="rush"){
+  let picked=0;
+  for(let i=food.length-1;i>=0;i--){
+   const f=food[i],rr=player.radius+f.radius;
+   if(distance2(player,f)<rr*rr){food[i]=createFood();picked++}
+  }
+  if(picked){arcade.points+=picked;coins+=picked;coinsDirty=true;refreshCoins();sound(850,.035)}
+  arcadeScore(arcade.points);
+  const left=Math.max(0,45-Math.floor(arcade.time/60));
+  arcadeStatus("⚡ "+left+"s | Energie: "+arcade.points);
+  if(left===0)arcadeEnd(arcade.points>=35,"Energie colectată: "+arcade.points,Math.floor(arcade.points/3));
+ }else if(mode==="neonsurvivor"){
+  if(arcade.time%600===0){
+   arcade.wave++;
+   for(let i=0;i<4+arcade.wave*2;i++){
+    const b=createBot();b.radius=random(12,24+arcade.wave*2);
+    bots.push(b);
+   }
+   notify("VALUL "+arcade.wave);
+  }
+  updateFood();
+  updateBots();
+  if(!running)return;
+  arcadeScore(Math.floor(arcade.time/60));
+  arcadeStatus("🛡 Val "+arcade.wave+" | "+Math.floor(arcade.time/60)+"/90s");
+  if(arcade.time>=5400)arcadeEnd(true,"Ai supraviețuit 90 de secunde!",120);
+ }else if(mode==="snake"){
+  const segments=arcade.segments;
+  segments.unshift({x:player.x,y:player.y});
+  while(segments.length>arcade.snakeLength)segments.pop();
+  for(let i=food.length-1;i>=0;i--){
+   if(distance2(player,food[i])<400){
+    food[i]=createFood();arcade.points++;arcade.snakeLength+=7;
+    coins++;coinsDirty=true;refreshCoins();sound(920,.05);
+   }
+  }
+  if(arcade.time>90){
+   for(let i=25;i<segments.length;i+=2){
+    const dx=player.x-segments[i].x,dy=player.y-segments[i].y;
+    if(dx*dx+dy*dy<130){arcadeEnd(false,"Ai atins propria coadă!",Math.floor(arcade.points/2));return}
+   }
+  }
+  arcadeScore(arcade.points);
+  arcadeStatus("🐍 Energie: "+arcade.points+" | Coadă: "+arcade.snakeLength);
+  if(arcade.points>=25)arcadeEnd(true,"Ai crescut șarpele neon!",80);
+ }else if(mode==="hockey"){
+  const p=arcade.puck,e=arcade.enemy;
+  if(arcade.goalCooldown>0)arcade.goalCooldown--;
+  const difficultySpeed=difficulty==="hard"?4.2:difficulty==="easy"?2.4:3.2;
+  const targetX=clamp(p.x,90,MAP_SIZE-90),targetY=clamp(p.y-65,90,MAP_SIZE*.46);
+  const ex=targetX-e.x,ey=targetY-e.y,ed=Math.hypot(ex,ey)||1;
+  e.x+=ex/ed*Math.min(difficultySpeed,ed);
+  e.y+=ey/ed*Math.min(difficultySpeed,ed);
+  e.x=clamp(e.x,90,MAP_SIZE-90);e.y=clamp(e.y,90,MAP_SIZE*.46);
+  for(const [orb,power] of [[player,1],[e,1.1]]){
+   const dx=p.x-orb.x,dy=p.y-orb.y,dist=Math.hypot(dx,dy)||1;
+   if(dist<orb.radius+15){
+    p.vx=dx/dist*(7*power)+(orb===player?(joystick.x||0)*3:0);
+    p.vy=dy/dist*(7*power)+(orb===player?(joystick.y||0)*3:0);
+    p.x=orb.x+dx/dist*(orb.radius+16);p.y=orb.y+dy/dist*(orb.radius+16);
+   }
+  }
+  if(arcade.goalCooldown===0){p.x+=p.vx;p.y+=p.vy}
+  p.vx*=.995;p.vy*=.995;
+  if(p.x<70||p.x>MAP_SIZE-70){p.x=clamp(p.x,70,MAP_SIZE-70);p.vx*=-.9}
+  if(p.y<60||p.y>MAP_SIZE-60){
+   if(Math.abs(p.x-MAP_SIZE/2)<145&&arcade.goalCooldown===0){
+    if(p.y<60){arcade.goals++;notify("GOL! +1")}
+    else{arcade.enemyGoals++;notify("GOL ADVERSAR!")}
+    resetPuck();player.x=MAP_SIZE/2;player.y=MAP_SIZE*.77;
+   }else{p.y=clamp(p.y,60,MAP_SIZE-60);p.vy*=-.9}
+  }
+  arcadeScore(arcade.goals);
+  arcadeStatus("🏒 TU "+arcade.goals+" : "+arcade.enemyGoals+" AI");
+  if(arcade.goals>=5||arcade.enemyGoals>=5){
+   const won=arcade.goals>=5;
+   arcadeEnd(won,won?"Ai câștigat meciul!":"AI a câștigat meciul!",won?90:10);
+  }
+ }else if(mode==="royale"){
+  arcade.ring=Math.max(170,MAP_SIZE*.68-arcade.time*.11);
+  const center=MAP_SIZE/2;
+  const pd=Math.hypot(player.x-center,player.y-center);
+  if(pd>arcade.ring&&arcade.time%20===0){
+   player.radius-=1.2;
+   if(player.radius<9){arcadeEnd(false,"Zona electrică te-a eliminat!");return}
+  }
+  for(let i=bots.length-1;i>=0;i--){
+   const b=bots[i];
+   if(freezeTimer===0){
+    const dx=center-b.x,dy=center-b.y,d=Math.hypot(dx,dy)||1;
+    if(d>arcade.ring*.85){b.x+=dx/d*2.7;b.y+=dy/d*2.7}
+    else{b.angle+=random(-.16,.16);b.x+=Math.cos(b.angle)*1.9;b.y+=Math.sin(b.angle)*1.9}
+   }
+   if(Math.hypot(b.x-center,b.y-center)>arcade.ring+55){bots.splice(i,1);continue}
+   const r=player.radius+b.radius;
+   if(spawnProtection===0&&distance2(player,b)<r*r){
+    if(player.radius>b.radius*1.06){bots.splice(i,1);player.radius+=2;arcade.points++;sound(920,.06)}
+    else if(b.radius>player.radius*1.06&&!(skill==="ghost"&&skillTimer>0)){
+     arcadeEnd(false,"Ai fost eliminat din NEON ROYALE!");return;
+    }
+   }
+  }
+  if(arcade.time%90===0){
+   for(let i=0;i<bots.length;i++)for(let j=i+1;j<bots.length;j++){
+    const a=bots[i],b=bots[j],r=a.radius+b.radius;
+    if(distance2(a,b)<r*r){bots.splice(a.radius>=b.radius?j:i,1);i=-1;break}
+   }
+  }
+  arcadeScore(20-bots.length);
+  arcadeStatus("👑 Rămași: "+(bots.length+1)+"/20 | Zonă: "+Math.round(arcade.ring));
+  if(bots.length===0)arcadeEnd(true,"Ești ultimul supraviețuitor!",150);
+ }
+ if(running){
+  const targetZoom=mode==="hockey"?Math.min(W,H)/1100:Math.max(.38,30/player.radius);
+  zoom+=(targetZoom-zoom)*.08;
+  if(frame%15===0){$("dashBtn").style.opacity=dashCooldown>0?".5":"1";$("skillBtn").style.opacity=skillCooldown>0?".5":"1"}
+ }
+}
+function drawArcadeExtras(foreground){
+ if(mode==="snake"&&foreground){
+  const seg=arcade.segments;
+  ctx.strokeStyle="#00eaff";ctx.lineWidth=Math.max(5,player.radius*zoom*1.15);
+  ctx.lineCap="round";ctx.lineJoin="round";
+  if(seg.length>1){ctx.beginPath();ctx.moveTo(screenX(seg[0].x),screenY(seg[0].y));
+   for(let i=1;i<seg.length;i++)ctx.lineTo(screenX(seg[i].x),screenY(seg[i].y));ctx.stroke()}
+ }
+ if(mode==="hockey"){
+  if(!foreground){
+   const x=screenX(60),y=screenY(60),sz=(MAP_SIZE-120)*zoom;
+   ctx.strokeStyle="#49caff";ctx.lineWidth=3;ctx.strokeRect(x,y,sz,sz);
+   ctx.beginPath();ctx.moveTo(x,y+sz/2);ctx.lineTo(x+sz,y+sz/2);ctx.stroke();
+   ctx.beginPath();ctx.arc(screenX(MAP_SIZE/2),screenY(MAP_SIZE/2),100*zoom,0,TAU);ctx.stroke();
+   ctx.strokeStyle="#ffdd44";ctx.lineWidth=8;
+   ctx.beginPath();ctx.moveTo(screenX(MAP_SIZE/2-145),screenY(60));ctx.lineTo(screenX(MAP_SIZE/2+145),screenY(60));ctx.stroke();
+   ctx.beginPath();ctx.moveTo(screenX(MAP_SIZE/2-145),screenY(MAP_SIZE-60));ctx.lineTo(screenX(MAP_SIZE/2+145),screenY(MAP_SIZE-60));ctx.stroke();
+  }else if(arcade.puck){
+   const p=arcade.puck;drawOrb3D(screenX(p.x),screenY(p.y),14*zoom,"#ffe94a",0,false);
+  }
+ }
+ if(mode==="royale"&&!foreground){
+  ctx.beginPath();ctx.arc(screenX(MAP_SIZE/2),screenY(MAP_SIZE/2),arcade.ring*zoom,0,TAU);
+  ctx.strokeStyle="#ff375c";ctx.lineWidth=6;ctx.stroke();
+ }
 }
 
 // MENIU ANIMAT, DAR UȘOR PENTRU TELEFON
@@ -1059,7 +1259,6 @@ translateGame();
 refreshCoins();
 updateRecord();
 requestAnimationFrame(loop);
-window.ndStatus("GATA · v3 · butoane conectate");
 </script>
 </body>
 </html>
