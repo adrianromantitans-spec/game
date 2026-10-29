@@ -767,11 +767,18 @@ if(dashTimer>0)speed*=2.2;
 if(skill==="giant"&&skillTimer>0)speed*=.8;
 const nx=clamp(player.x+dx*speed,player.radius,MAP_SIZE-player.radius);
 const ny=clamp(player.y+dy*speed,player.radius,MAP_SIZE-player.radius);
+const oldX=player.x,oldY=player.y;
 if(!blocked(nx,player.y,player.radius))player.x=nx;
 if(!blocked(player.x,ny,player.radius))player.y=ny;
-if(length>0&&frame%2===0){
+// Urma apare numai dacă personajul chiar se deplasează.
+if((player.x!==oldX||player.y!==oldY)&&frame%2===0){
 player.trail.push({x:player.x,y:player.y,radius:player.radius,life:12});
 if(player.trail.length>8)player.trail.shift();
+}
+// Urmele vechi se sting inclusiv când joystickul este eliberat.
+for(let i=player.trail.length-1;i>=0;i--){
+player.trail[i].life--;
+if(player.trail[i].life<=0)player.trail.splice(i,1);
 }
 }
 
