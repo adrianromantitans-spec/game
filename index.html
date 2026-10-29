@@ -37,6 +37,9 @@ label{color:#aac4d7;font-size:13px}
 #coinsText{color:#ffdb38}
 #minimap{position:fixed;top:12px;right:12px;width:90px;height:90px;z-index:5;border:2px solid var(--cyan);border-radius:12px;background:#030a15}
 #notice{position:fixed;top:17%;left:50%;transform:translateX(-50%);z-index:40;color:#55ffaa;font-weight:bold;text-align:center;pointer-events:none;text-shadow:0 0 15px #00ff99}
+#notice.hockeyGoal{top:50%;left:50%;transform:translate(-50%,-50%);width:max-content;max-width:92vw;font-size:clamp(26px,8vw,48px);padding:14px 20px;border-radius:18px;background:rgba(2,9,23,.78);border:2px solid #49caff;box-shadow:0 0 28px #49caff55;animation:goalPop .24s ease-out}
+#notice.hockeyGoal.enemyGoal{color:#ff6378;border-color:#ff6378;box-shadow:0 0 28px #ff637855}
+@keyframes goalPop{from{opacity:.2;transform:translate(-50%,-50%) scale(.75)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 .control{position:fixed;z-index:12;width:58px;height:58px;min-width:0;padding:0;border-radius:50%;background:#071a2cdd;touch-action:none;user-select:none;-webkit-user-select:none}
 #pauseBtn{top:115px;right:12px;width:46px;height:46px;color:#ffdb38;border-color:#ffdb38}
 #dashBtn{right:calc(15px + var(--right));bottom:calc(18px + var(--bottom))}
@@ -388,10 +391,12 @@ container.appendChild(div);
 }
 
 let noticeTimer;
-function notify(message){
-$("notice").textContent=message;
-clearTimeout(noticeTimer);
-noticeTimer=setTimeout(()=>$("notice").textContent="",2200);
+function notify(message,goalType=""){
+ const el=$("notice");
+ el.className=goalType?("hockeyGoal"+(goalType==="enemy"?" enemyGoal":"")):"";
+ el.textContent=message;
+ clearTimeout(noticeTimer);
+ noticeTimer=setTimeout(()=>{el.textContent="";el.className=""},goalType?1500:2200);
 }
 
 $("playBtn").onclick=()=>{mode="classic";startGame()};
@@ -499,17 +504,25 @@ function hockeyRoundEnd(won){
 // Control tactil Android/iPhone: touch events sunt prioritare; pointer/mouse sunt fallback.
 // Ascultam pe document in capture, astfel incat atingerea merge si in browser-ele
 // care nu trimit pointerdown direct pe canvas.
-const hockeyTouch={active:false,id:null,kind:null,x:500,y:770};
+const hockeyTouch={active:false,id:null,kind:null,x:500,y:770,lastX:0,lastY:0};
 function hockeyViewScale(){
- // Teren complet vizibil, cu margini pentru telefoanele inguste.
+ // Terenul ramane fix si complet vizibil pe orice dimensiune de ecran.
  return Math.max(.12,Math.min((W-20)/920,(H-28)/920));
+}
+function hockeyTouchBegin(cx,cy){
+ // Nu teleportam paleta la deget: miscarea incepe exact de unde este paleta.
+ hockeyTouch.lastX=cx;hockeyTouch.lastY=cy;
+ hockeyTouch.x=player.x;hockeyTouch.y=player.y;
 }
 function hockeyPointerPosition(cx,cy){
  const scale=hockeyViewScale();
- // Degetul este putin sub paleta pentru a nu o acoperi vizual.
- const lift=Math.min(70,Math.max(25,H*.075));
- hockeyTouch.x=clamp(500+(cx-W/2)/scale,92,908);
- hockeyTouch.y=clamp(500+(cy-lift-H/2)/scale,525,902);
+ // Folosim diferenta de deplasare dintre atingeri, nu pozitia absoluta.
+ // Asa paleta nu sare la atingere si functioneaza inclusiv pe ecrane inguste.
+ const dx=clamp((cx-hockeyTouch.lastX)/scale,-140,140);
+ const dy=clamp((cy-hockeyTouch.lastY)/scale,-140,140);
+ hockeyTouch.lastX=cx;hockeyTouch.lastY=cy;
+ hockeyTouch.x=clamp(hockeyTouch.x+dx,92,908);
+ hockeyTouch.y=clamp(hockeyTouch.y+dy,525,902);
 }
 function hockeyCanTouch(target){
  if(mode!=="hockey"||!running||paused)return false;
@@ -524,7 +537,7 @@ document.addEventListener("touchstart",e=>{
  // Atingerile in zona de joc, inclusiv deasupra terenului, misca paleta.
  const t=e.changedTouches[0];if(!t)return;
  hockeyTouch.active=true;hockeyTouch.kind="touch";hockeyTouch.id=t.identifier;
- hockeyPointerPosition(t.clientX,t.clientY);
+ hockeyTouchBegin(t.clientX,t.clientY);
  if(e.cancelable)e.preventDefault();
 },{passive:false,capture:true});
 document.addEventListener("touchmove",e=>{
@@ -545,7 +558,7 @@ $("hockeyTouchSurface").addEventListener("pointerdown",e=>{
  if(!hockeyCanTouch(e.target)||hockeyTouch.active)return;
  if(e.pointerType==="mouse"&&e.button!==0)return;
  hockeyTouch.active=true;hockeyTouch.kind="pointer";hockeyTouch.id=e.pointerId;
- hockeyPointerPosition(e.clientX,e.clientY);
+ hockeyTouchBegin(e.clientX,e.clientY);
  try{$("hockeyTouchSurface").setPointerCapture(e.pointerId)}catch{}
  if(e.cancelable)e.preventDefault();
 });
@@ -936,7 +949,7 @@ if(mode==="hockey"){
  const ox=player.x,oy=player.y;
  if(hockeyTouch.active){
   const dx=hockeyTouch.x-player.x,dy=hockeyTouch.y-player.y;
-  const len=Math.hypot(dx,dy),maxMove=20;
+  const len=Math.hypot(dx,dy),maxMove=18;
   if(len>maxMove){player.x+=dx/len*maxMove;player.y+=dy/len*maxMove}else{player.x=hockeyTouch.x;player.y=hockeyTouch.y}
  }else{
   let dx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),dy=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
@@ -1355,7 +1368,7 @@ function updateHockey(){
      const youScored=p.y<74;
      if(youScored)a.goals++;else a.enemyGoals++;
      a.goalFlash=65;a.shake=9;
-     notify(youScored?"🥅 GOOOL!":"🥅 GOL ADVERSAR!");
+     notify(youScored?"🥅 GOOOL!":"🥅 GOL ADVERSAR!",youScored?"player":"enemy");
      sound(youScored?1100:190,.22,"sawtooth");
      if(navigator.vibrate)try{navigator.vibrate(youScored?[35,35,70]:[85])}catch{}
      if(particles.length<90)burst(p.x,clamp(p.y,74,926),youScored?"#49caff":"#ff3355",18);
