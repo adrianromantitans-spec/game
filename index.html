@@ -54,6 +54,9 @@ label{color:#aac4d7;font-size:13px}
 #freezeBtn{bottom:calc(12px + var(--bottom))}
 }
 #main>button{width:min(320px,88vw);min-height:52px;font-size:16px}#modesMenu>button,#hockeyMenu>button{width:min(320px,88vw);min-height:52px}#main #playBtn{font-size:19px;box-shadow:0 0 21px #49caff36}#modesMenuBtn,#hockeyMenuBtn{border-color:#ff4f88;color:#ff9fbe;background:#2a0b1e}#settingsBtn{border-color:#9a80ff;color:#ccbaff}.hockey-preview{font-size:52px;padding:14px 0;color:white}.hockey-preview span{font-size:18px;color:#a6bdd1;vertical-align:middle}.overlay{padding-top:max(20px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom))}#options{justify-content:flex-start}#options h1{margin-top:15px}#options .row{margin-bottom:10px}#options label{font-size:15px}#options input{width:min(300px,80vw)}
+#hockeyMenu .row button{min-width:115px;font-size:12px;padding:11px 10px}
+#hockeyRecord{color:#8de5ff!important}
+#hockeyStats{max-width:360px;padding:8px 14px;background:#061728;border-radius:12px}
 </style>
 </head>
 <body>
@@ -122,6 +125,9 @@ label{color:#aac4d7;font-size:13px}
 <h1>🏒 AIR HOCKEY</h1>
 <p id="hockeyIntro">Înfruntă botul inteligent! Mișcă paleta cu joystickul și înscrie 5 goluri pentru victorie.</p>
 <div class="hockey-preview">🔵 <span>VS</span> 🔴</div>
+<label>Scor pentru victorie</label><div class="row"><button class="hGoal selected" data-goals="5">5 GOLURI</button><button class="hGoal" data-goals="10">10 GOLURI</button></div>
+<label>Durata meciului</label><div class="row"><button class="hTime selected" data-time="0">FĂRĂ LIMITĂ</button><button class="hTime" data-time="120">2 MIN</button><button class="hTime" data-time="180">3 MIN</button></div>
+<p id="hockeyRecord" style="font-size:13px;margin:2px">🏆 Victorii: 0 · Serie: 0</p>
 <button id="hockeyStartBtn" class="primary">▶ START HOCKEY</button>
 <button id="hockeyBackBtn">ÎNAPOI</button>
 </div>
@@ -131,7 +137,7 @@ label{color:#aac4d7;font-size:13px}
 <div>🪙 <span id="shopCoins">0</span></div>
 <div class="row">
 <button id="skinsTab" class="selected">Skin-uri</button>
-<button id="aurasTab">Aure Speciale</button>
+<button id="aurasTab">Aure Speciale</button><button id="hockeyTab">🏒 Hockey</button>
 </div>
 <div id="shopItems"></div>
 <button id="shopBack">ÎNAPOI</button>
@@ -145,7 +151,7 @@ label{color:#aac4d7;font-size:13px}
 
 <div id="gameover" class="overlay hidden">
 <h1 id="endTitle">GAME OVER</h1>
-<p id="endText">Ai fost devorat!</p>
+<p id="endText">Ai fost devorat!</p><div id="hockeyStats" class="hidden" style="line-height:1.75;color:#bdeaff;font-size:15px"></div>
 <button class="primary" id="retryBtn">REÎNCEARCĂ</button>
 <button id="endMenuBtn">MENIU PRINCIPAL</button>
 </div>
@@ -169,6 +175,7 @@ let W=innerWidth,H=innerHeight,DPR=1;
 let quality=1;
 let slowFrames=0;
 let fastFrames=0;
+let floorGradient=null;
 
 function resize(){
 W=innerWidth;
@@ -180,6 +187,9 @@ canvas.style.width=W+"px";
 canvas.style.height=H+"px";
 ctx.setTransform(DPR,0,0,DPR,0,0);
 ctx.imageSmoothingEnabled=true;
+floorGradient=ctx.createLinearGradient(0,0,0,H);
+floorGradient.addColorStop(0,"#0a1122");
+floorGradient.addColorStop(1,"#02040b");
 resetJoystick();
 }
 
@@ -204,6 +214,15 @@ let volume=.5;
 let skin=getSaved("nd_skin","#44aaff");
 let aura=getSaved("nd_aura","none");
 let shopTab="skins";
+let hockeySkin=getSaved("nd_hockey_skin","cyan");
+const hockeySkins=[{id:"cyan",name:"Cyber Blue",price:0,color:"#49caff"},{id:"pink",name:"Neon Pink",price:75,color:"#ff5ac8"},{id:"gold",name:"Gold Striker",price:150,color:"#ffd63d"},{id:"mint",name:"Toxic Mint",price:220,color:"#54ffbb"}];
+let hockeyGoalLimit=Number(getSaved("nd_hockey_goals","5"))===10?10:5;
+let hockeyTimeLimit=[0,120,180].includes(Number(getSaved("nd_hockey_time","0")))?Number(getSaved("nd_hockey_time","0")):0;
+function hockeySkinColor(){return (hockeySkins.find(s=>s.id===hockeySkin)||hockeySkins[0]).color}
+function hockeyRecords(){return {wins:Number(getSaved("nd_hockey_wins",0))||0,losses:Number(getSaved("nd_hockey_losses",0))||0,streak:Number(getSaved("nd_hockey_streak",0))||0,best:Number(getSaved("nd_hockey_best",0))||0}}
+function updateHockeyRecords(){let r=hockeyRecords();$("hockeyRecord").textContent=`🏆 Victorii: ${r.wins} · Serie: ${r.streak} · Record: ${r.best}`;}
+function updateHockeySelections(){document.querySelectorAll(".hGoal").forEach(b=>b.classList.toggle("selected",+b.dataset.goals===hockeyGoalLimit));document.querySelectorAll(".hTime").forEach(b=>b.classList.toggle("selected",+b.dataset.time===hockeyTimeLimit));updateHockeyRecords()}
+
 
 if(!["ro","en","es"].includes(language))language="ro";
 
@@ -236,7 +255,7 @@ winText:"Ai dominat arena!",bossNotice:"⚠ BOSS APĂRUT!",
 notEnough:"Nu ai suficiente monede!",
 none:"Fără aură",redAura:"Aura Roșie",cyanAura:"Aura Cyan",
 easy:"UȘOR",mid:"MEDIU",hard:"GREU",
-classicPlay:"▶ JOACĂ CLASSIC",hockeyMenu:"🏒 AIR HOCKEY",modesMenu:"🎮 MODURI DE JOC",modesTitle:"MODURI DE JOC",modesIntro:"Alege un mod suplimentar de joc.",settings:"⚙ SETĂRI",saveBack:"SALVEAZĂ ȘI ÎNAPOI",hockeyStart:"▶ START HOCKEY",hockeyIntro:"Joacă împotriva unui bot inteligent! Primul la 5 goluri câștigă.",settingsIntro:"Alege abilitatea pentru Classic, dificultatea și volumul."
+classicPlay:"▶ JOACĂ CLASSIC",hockeyMenu:"🏒 AIR HOCKEY",modesMenu:"🎮 MODURI DE JOC",modesTitle:"MODURI DE JOC",modesIntro:"Alege un mod suplimentar de joc.",settings:"⚙ SETĂRI",saveBack:"SALVEAZĂ ȘI ÎNAPOI",hockeyStart:"▶ START HOCKEY",hockeyIntro:"Joacă împotriva unui bot inteligent! Atinge terenul pentru a mișca paleta. Alege regula meciului.",settingsIntro:"Alege abilitatea pentru Classic, dificultatea și volumul."
 },
 en:{
 description:"Grow, devour smaller opponents and dominate the arena!",
@@ -254,7 +273,7 @@ winText:"You dominated the arena!",bossNotice:"⚠ BOSS APPEARED!",
 notEnough:"Not enough coins!",
 none:"No Aura",redAura:"Red Aura",cyanAura:"Cyan Aura",
 easy:"EASY",mid:"MEDIUM",hard:"HARD",
-classicPlay:"▶ PLAY CLASSIC",hockeyMenu:"🏒 AIR HOCKEY",modesMenu:"🎮 GAME MODES",modesTitle:"GAME MODES",modesIntro:"Choose an additional game mode.",settings:"⚙ SETTINGS",saveBack:"SAVE & BACK",hockeyStart:"▶ START HOCKEY",hockeyIntro:"Play against a smart AI! First to score 5 goals wins.",settingsIntro:"Choose your Classic ability, difficulty and sound volume."
+classicPlay:"▶ PLAY CLASSIC",hockeyMenu:"🏒 AIR HOCKEY",modesMenu:"🎮 GAME MODES",modesTitle:"GAME MODES",modesIntro:"Choose an additional game mode.",settings:"⚙ SETTINGS",saveBack:"SAVE & BACK",hockeyStart:"▶ START HOCKEY",hockeyIntro:"Play against a smart AI! Touch the rink to control your striker. Choose your match rules.",settingsIntro:"Choose your Classic ability, difficulty and sound volume."
 },
 es:{
 description:"¡Crece, devora rivales más pequeños y domina la arena!",
@@ -272,7 +291,7 @@ winText:"¡Has dominado la arena!",bossNotice:"⚠ ¡JEFE APARECIÓ!",
 notEnough:"¡No tienes suficientes monedas!",
 none:"Sin aura",redAura:"Aura Roja",cyanAura:"Aura Cian",
 easy:"FÁCIL",mid:"MEDIO",hard:"DIFÍCIL",
-classicPlay:"▶ JUGAR CLASSIC",hockeyMenu:"🏒 AIR HOCKEY",modesMenu:"🎮 MODOS DE JUEGO",modesTitle:"MODOS DE JUEGO",modesIntro:"Elige un modo de juego adicional.",settings:"⚙ AJUSTES",saveBack:"GUARDAR Y VOLVER",hockeyStart:"▶ INICIAR HOCKEY",hockeyIntro:"¡Juega contra una IA inteligente! Gana quien marque 5 goles.",settingsIntro:"Elige habilidad de Classic, dificultad y volumen."
+classicPlay:"▶ JUGAR CLASSIC",hockeyMenu:"🏒 AIR HOCKEY",modesMenu:"🎮 MODOS DE JUEGO",modesTitle:"MODOS DE JUEGO",modesIntro:"Elige un modo de juego adicional.",settings:"⚙ AJUSTES",saveBack:"GUARDAR Y VOLVER",hockeyStart:"▶ INICIAR HOCKEY",hockeyIntro:"¡Juega contra una IA inteligente! Toca la pista para mover tu paleta. Elige las reglas.",settingsIntro:"Elige habilidad de Classic, dificultad y volumen."
 }
 };
 const t=()=>translations[language];
@@ -282,7 +301,8 @@ function showScreen(id){
 $(name).classList.toggle("hidden",name!==id));
 const playing=id===null;
 ["hud","minimap","pauseBtn","dashBtn","skillBtn","splitBtn","freezeBtn","joy"]
-.forEach(name=>$(name).classList.toggle("hidden",!playing));
+.forEach(name=>$(name).classList.toggle("hidden",!playing || (mode==="hockey" && name!=="hud" && name!=="pauseBtn")));
+if(playing&&mode==="hockey")$("minimap").classList.add("hidden");
 }
 
 function translateGame(){
@@ -328,11 +348,12 @@ function renderShop(){
 refreshCoins();
 $("skinsTab").classList.toggle("selected",shopTab==="skins");
 $("aurasTab").classList.toggle("selected",shopTab==="auras");
+$("hockeyTab").classList.toggle("selected",shopTab==="hockey");
 const container=$("shopItems");
 container.replaceChildren();
-for(const item of shopTab==="skins"?skins:auras){
+for(const item of shopTab==="skins"?skins:shopTab==="auras"?auras:hockeySkins){
 const isOwned=owned(item);
-const selected=shopTab==="skins"?skin===item.id:aura===item.id;
+const selected=shopTab==="skins"?skin===item.id:shopTab==="auras"?aura===item.id:hockeySkin===item.id;
 const div=document.createElement("div");
 div.className="shopItem "+(isOwned?"owned ":"")+(selected?"selected":"");
 let name=item.name;
@@ -353,7 +374,8 @@ save("nd_owned_"+item.id,true);
 sound(950,.2);
 }
 if(shopTab==="skins"){skin=item.id;save("nd_skin",skin)}
-else{aura=item.id;save("nd_aura",aura)}
+else if(shopTab==="auras"){aura=item.id;save("nd_aura",aura)}
+else{hockeySkin=item.id;save("nd_hockey_skin",hockeySkin)}
 renderShop();
 };
 container.appendChild(div);
@@ -370,7 +392,9 @@ noticeTimer=setTimeout(()=>$("notice").textContent="",2200);
 $("playBtn").onclick=()=>{mode="classic";startGame()};
 $("modesMenuBtn").onclick=()=>showScreen("modesMenu");
 $("modesBackBtn").onclick=()=>showScreen("main");
-$("hockeyMenuBtn").onclick=()=>showScreen("hockeyMenu");
+$("hockeyMenuBtn").onclick=()=>{updateHockeySelections();showScreen("hockeyMenu")};
+document.querySelectorAll(".hGoal").forEach(b=>b.onclick=()=>{hockeyGoalLimit=+b.dataset.goals;save("nd_hockey_goals",hockeyGoalLimit);updateHockeySelections()});
+document.querySelectorAll(".hTime").forEach(b=>b.onclick=()=>{hockeyTimeLimit=+b.dataset.time;save("nd_hockey_time",hockeyTimeLimit);updateHockeySelections()});
 $("hockeyStartBtn").onclick=()=>{mode="hockey";startGame()};
 $("hockeyBackBtn").onclick=()=>showScreen("modesMenu");
 $("settingsBtn").onclick=()=>showScreen("options");
@@ -379,6 +403,7 @@ $("shopBtn").onclick=()=>{renderShop();showScreen("shop")};
 $("shopBack").onclick=()=>showScreen("main");
 $("skinsTab").onclick=()=>{shopTab="skins";renderShop()};
 $("aurasTab").onclick=()=>{shopTab="auras";renderShop()};
+$("hockeyTab").onclick=()=>{shopTab="hockey";renderShop()};
 
 function choose(selector,property,callback){
 document.querySelectorAll(selector).forEach(button=>button.onclick=()=>{
@@ -441,20 +466,46 @@ function arcadeEnd(win,detail,reward=0){
  $("endText").textContent=detail+(reward?" | 🪙 +"+reward:"");
 }
 function initArcade(){
- arcade={time:0,points:0,wave:1,goals:0,enemyGoals:0,goalCooldown:0,segments:[],puck:null,ring:0};
+ arcade={time:0,goals:0,enemyGoals:0,goalCooldown:95,seconds:0,shots:0,aiShots:0,possessions:0,hitTimer:0,puckTrail:[],lastHit:"",goalFlash:0,shake:0};
  $("arcadeHud").textContent="";
- if(mode==="hockey"){
-  MAP_SIZE=1000;bots=[];food=[];
-  player.x=MAP_SIZE/2;player.y=MAP_SIZE*.77;player.radius=26;player.baseSpeed=6;
-  arcade.enemy={x:MAP_SIZE/2,y:MAP_SIZE*.23,radius:28,color:"#ff3355",angle:0,strafe:1,aiTimer:0};
-  resetPuck();
- }
+ MAP_SIZE=1000;bots=[];food=[];guards=[];walls=[];
+ player.x=500;player.y=770;player.radius=32;player.baseSpeed=7;player.trail=[];
+ arcade.enemy={x:500,y:235,radius:32,color:"#ff3355",angle:0,vx:0,vy:0,tx:500,ty:235,aiTimer:0};
+ hockeyTouch.active=false;hockeyTouch.id=null;
+ resetPuck();
 }
 function resetPuck(){
- arcade.puck={x:MAP_SIZE/2,y:MAP_SIZE/2,vx:random(-2.5,2.5),vy:random(-3.5,3.5)};
- if(Math.abs(arcade.puck.vy)<1.5)arcade.puck.vy=arcade.puck.vy<0?-2.5:2.5;
- arcade.goalCooldown=65;
+ const dir=Math.random()<.5?-1:1;
+ arcade.puck={x:500,y:500,vx:random(-1.5,1.5),vy:dir*2.4,radius:14};
+ arcade.puckTrail=[];arcade.goalCooldown=85;
 }
+function hockeyRoundEnd(won){
+ const old=hockeyRecords();
+ const streak=won?old.streak+1:0;
+ save("nd_hockey_wins",old.wins+(won?1:0));save("nd_hockey_losses",old.losses+(won?0:1));
+ save("nd_hockey_streak",streak);save("nd_hockey_best",Math.max(old.best,streak));
+ const reward=won?100:15;
+ const accuracy=arcade.shots?Math.round(arcade.goals/arcade.shots*100):0;
+ arcadeEnd(won,won?"Victorie în Air Hockey!":"Meci încheiat!",reward);
+ $("hockeyStats").classList.remove("hidden");
+ $("hockeyStats").textContent=`🏒 ${arcade.goals} - ${arcade.enemyGoals}  |  ⏱ ${Math.floor(arcade.seconds/60)}:${String(Math.floor(arcade.seconds%60)).padStart(2,"0")}  |  Șuturi: ${arcade.shots}  |  Goluri/șuturi: ${accuracy}%  |  Serie: ${streak}`;
+ updateHockeyRecords();
+}
+// Control direct: coordonate ecran -> arena, pe jumătatea jucătorului.
+const hockeyTouch={active:false,id:null,x:500,y:770};
+function hockeyPointerPosition(cx,cy){
+ hockeyTouch.x=clamp(500+(cx-W/2)/Math.max(.01,zoom),92,908);
+ hockeyTouch.y=clamp(500+(cy-H/2)/Math.max(.01,zoom),525,902);
+}
+canvas.addEventListener("pointerdown",e=>{
+ if(mode!=="hockey"||!running||paused||hockeyTouch.active)return;
+ if(e.pointerType==="mouse"&&e.button!==0)return;
+ hockeyTouch.active=true;hockeyTouch.id=e.pointerId;hockeyPointerPosition(e.clientX,e.clientY);
+ try{canvas.setPointerCapture(e.pointerId)}catch{}e.preventDefault();
+});
+canvas.addEventListener("pointermove",e=>{if(hockeyTouch.active&&hockeyTouch.id===e.pointerId){hockeyPointerPosition(e.clientX,e.clientY);e.preventDefault()}});
+function hockeyPointerEnd(e){if(hockeyTouch.id===e.pointerId){hockeyTouch.active=false;hockeyTouch.id=null}}
+canvas.addEventListener("pointerup",hockeyPointerEnd);canvas.addEventListener("pointercancel",hockeyPointerEnd);
 
 
 function recordKey(){return "nd_rec_"+mode}
@@ -508,6 +559,7 @@ if(!blocked(nx,ny,35)){x=nx;y=ny;break}
 player={x,y,radius:15,color:skin,angle:0,baseSpeed:4.5,trail:[]};
 }
 function startGame(){
+$("hockeyStats").classList.add("hidden");
 MAP_SIZE=3000;
 bots=[];food=[];guards=[];walls=[];particles=[];
 frame=0;zoom=1;spawnProtection=180;
@@ -537,6 +589,7 @@ showScreen(null);resetJoystick();
 $("retryBtn").onclick=startGame;
 
 function gameOver(win=false){
+if(mode!=="hockey")$("hockeyStats").classList.add("hidden");
 flushProgress();
 running=false;resetJoystick();
 $("endTitle").textContent=win?t().win:t().gameOver;
@@ -766,10 +819,7 @@ ctx.fill();
 }
 
 function drawFloor(){
-const bg=ctx.createLinearGradient(0,0,0,H);
-bg.addColorStop(0,"#0a1122");
-bg.addColorStop(1,"#02040b");
-ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+ctx.fillStyle=floorGradient||"#040813";ctx.fillRect(0,0,W,H);
 const spacing=Math.max(35,100*zoom);
 const ox=((-player.x*zoom)%spacing+spacing)%spacing;
 const oy=((-player.y*zoom)%spacing+spacing)%spacing;
@@ -780,8 +830,8 @@ for(let x=ox;x<W;x+=spacing){ctx.moveTo(x,0);ctx.lineTo(x,H)}
 for(let y=oy;y<H;y+=spacing){ctx.moveTo(0,y);ctx.lineTo(W,y)}
 ctx.stroke();
 }
-function screenX(x){return(x-player.x)*zoom+W/2}
-function screenY(y){return(y-player.y)*zoom+H/2}
+function screenX(x){return(x-(mode==="hockey"?500:player.x))*zoom+W/2}
+function screenY(y){return(y-(mode==="hockey"?500:player.y))*zoom+H/2}
 function visible(x,y,r=30){
 return x>-r&&y>-r&&x<W+r&&y<H+r;
 }
@@ -806,12 +856,30 @@ ctx.strokeRect(x,y,ww,hh);
 }
 }
 function burst(x,y,color,count=8){
+if(particles.length>95)return;
 const max=quality<1?5:count;
 for(let i=0;i<max;i++)particles.push({
 x,y,vx:random(-4,4),vy:random(-4,4),life:25,color
 });
 }
 function movePlayer(){
+if(mode==="hockey"){
+ const ox=player.x,oy=player.y;
+ if(hockeyTouch.active){
+  const dx=hockeyTouch.x-player.x,dy=hockeyTouch.y-player.y;
+  const len=Math.hypot(dx,dy),maxMove=18;
+  if(len>maxMove){player.x+=dx/len*maxMove;player.y+=dy/len*maxMove}else{player.x=hockeyTouch.x;player.y=hockeyTouch.y}
+ }else{
+  let dx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),dy=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
+  const len=Math.hypot(dx,dy)||1;player.x+=dx/len*player.baseSpeed;player.y+=dy/len*player.baseSpeed;
+ }
+ player.x=clamp(player.x,92,908);player.y=clamp(player.y,525,902);
+ player.vx=player.x-ox;player.vy=player.y-oy;
+ player.angle=Math.atan2(player.vy,player.vx);
+ player.trail.length=0;
+ return;
+}
+
 let dx=joystick.active?joystick.x:0;
 let dy=joystick.active?joystick.y:0;
 if(keys.w||keys.arrowup)dy=-1;
@@ -883,8 +951,34 @@ const classicAI={
  mid:{speed:1.0,view:300,think:12,steer:.115,bravery:1,foodBias:1.15},
  hard:{speed:1.23,view:405,think:6,steer:.20,bravery:1.18,foodBias:.85}
 };
+// Spatial hash: AI checks food near each bot, not the full map every decision.
+const FOOD_CELL=160;
+const foodSpatial=new Map();
+let foodSpatialFrame=-999;
+function rebuildFoodSpatial(){
+ foodSpatial.clear();
+ for(let j=0;j<food.length;j++){
+  const f=food[j];
+  const key=(Math.floor(f.x/FOOD_CELL)*1000+Math.floor(f.y/FOOD_CELL));
+  let bucket=foodSpatial.get(key);
+  if(!bucket){bucket=[];foodSpatial.set(key,bucket)}
+  bucket.push(j);
+ }
+ foodSpatialFrame=frame;
+}
+function nearbyFoodIndices(x,y,range,fn){
+ const minX=Math.max(0,Math.floor((x-range)/FOOD_CELL));
+ const maxX=Math.floor((x+range)/FOOD_CELL);
+ const minY=Math.max(0,Math.floor((y-range)/FOOD_CELL));
+ const maxY=Math.floor((y+range)/FOOD_CELL);
+ for(let gx=minX;gx<=maxX;gx++)for(let gy=minY;gy<=maxY;gy++){
+  const bucket=foodSpatial.get(gx*1000+gy);
+  if(bucket)for(let k=0;k<bucket.length;k++)fn(bucket[k]);
+ }
+}
 function updateBots(){
  const cfg=classicAI[difficulty]||classicAI.mid;
+ if(frame-foodSpatialFrame>=10||foodSpatialFrame>frame)rebuildFoodSpatial();
  for(let i=bots.length-1;i>=0;i--){
   const b=bots[i];
   if(!Number.isFinite(b.targetAngle))b.targetAngle=b.angle||0;
@@ -895,15 +989,14 @@ function updateBots(){
    b.targetTimer=cfg.think+Math.floor(random(0,6));
    let fx=0,fy=0,threat=false;
    let bestFood=null,bestFoodD=Infinity;
-   for(let j=0;j<food.length;j+=2){
+   nearbyFoodIndices(b.x,b.y,vision,j=>{
     const f=food[j],dx=f.x-b.x,dy=f.y-b.y,d2=dx*dx+dy*dy;
     if(d2<bestFoodD&&d2<vision*vision){bestFood=f;bestFoodD=d2}
-   }
+   });
    if(bestFood){const d=Math.sqrt(bestFoodD)||1;fx+=(bestFood.x-b.x)/d*cfg.foodBias;fy+=(bestFood.y-b.y)/d*cfg.foodBias}
    // Inclusiv jucatorul este perceput ca un adversar Agar.io.
-   const rivals=[player,...bots];
    let prey=null,preyD=Infinity;
-   for(const other of rivals){
+   for(const other of bots.concat(player)){
     if(other===b)continue;
     const dx=other.x-b.x,dy=other.y-b.y;
     const d2=dx*dx+dy*dy;
@@ -944,10 +1037,12 @@ function updateBots(){
   b.y=clamp(b.y,b.radius,MAP_SIZE-b.radius);
   // Mancarea si cresterea sunt esalonate pentru a pastra FPS-ul.
   if(frame%3===i%3){
-   for(let j=0;j<food.length;j++){
+   let eaten=false;
+   nearbyFoodIndices(b.x,b.y,b.radius+9,j=>{
+    if(eaten)return;
     const f=food[j],reach=b.radius+f.radius;
-    if(distance2(b,f)<reach*reach){b.radius+=.18;food[j]=createFood();break}
-   }
+    if(distance2(b,f)<reach*reach){b.radius+=.18;food[j]=createFood();eaten=true}
+   });
   }
   // Coliziuni bot-bot: cei mari ii consuma pe cei mici.
   if(frame%4===i%4){
@@ -1070,7 +1165,7 @@ ctx.fillStyle=p.color;
 ctx.fillRect(x,y,Math.max(2,3*zoom),Math.max(2,3*zoom));
 }
 ctx.globalAlpha=1;
-const cx=W/2,cy=H/2;
+const cx=mode==="hockey"?screenX(player.x):W/2,cy=mode==="hockey"?screenY(player.y):H/2;
 let r=player.radius*zoom;
 if(skill==="giant"&&skillTimer>0)r*=1.5;
 if(spawnProtection>0){
@@ -1088,10 +1183,10 @@ ctx.arc(cx,cy,r+14,0,TAU);
 ctx.stroke();
 }
 if(skill==="ghost"&&skillTimer>0)ctx.globalAlpha=.48;
-drawOrb3D(cx,cy,r,player.color,player.angle);
+drawOrb3D(cx,cy,r,mode==="hockey"?hockeySkinColor():player.color,player.angle);
 ctx.globalAlpha=1;
 if(arcadeModes.has(mode))drawArcadeExtras(true);
-if(frame%4===0)drawMinimap();
+if(mode!=="hockey"&&frame%4===0)drawMinimap();
 }
 function drawMinimap(){
 mctx.fillStyle="#030814";
@@ -1104,6 +1199,113 @@ mctx.fillStyle="#49caff";
 mctx.fillRect(player.x*scale-2,player.y*scale-2,4,4);
 }
 
+
+// AIR HOCKEY — fizică la pas fix, AI pe dificultăți și efecte limitate pentru Android.
+function hockeyAISettings(){
+ return ({easy:{speed:3.2,reaction:18,err:70,aim:.18,reach:110,power:.9},mid:{speed:5.2,reaction:8,err:25,aim:.5,reach:170,power:1.06},hard:{speed:7.4,reaction:3,err:5,aim:.8,reach:240,power:1.2}})[difficulty]||{speed:5.2,reaction:8,err:25,aim:.5,reach:170,power:1.06};
+}
+function hockeyBounceX(x,vx,frames){
+ const min=74,max=926,range=max-min;
+ let next=(x+vx*frames-min)%(range*2);
+ if(next<0)next+=range*2;
+ return min+(next>range?range*2-next:next);
+}
+function hockeyHit(orb,owner,settings){
+ const p=arcade.puck,dx=p.x-orb.x,dy=p.y-orb.y,min=orb.radius+p.radius;
+ const d=Math.hypot(dx,dy);
+ if(d>=min)return;
+ let nx=dx/(d||1),ny=dy/(d||1);
+ if(d<.01){nx=0;ny=owner==="ai"?1:-1}
+ p.x=orb.x+nx*(min+.4);p.y=orb.y+ny*(min+.4);
+ const ovx=orb.vx||0,ovy=orb.vy||0;
+ const impact=p.vx*nx+p.vy*ny;
+ const relative=impact-(ovx*nx+ovy*ny);
+ const impulse=Math.max(2.8,-relative*1.75);
+ p.vx+=nx*impulse+ovx*.27;p.vy+=ny*impulse+ovy*.27;
+ if(owner==="ai"){
+  const aimX=500+(difficulty==="hard"?Math.sin(arcade.time*.035)*85:0);
+  const dxg=aimX-p.x,dyg=945-p.y,glen=Math.hypot(dxg,dyg)||1;
+  p.vx=p.vx*(1-settings.aim)+dxg/glen*10*settings.aim;
+  p.vy=p.vy*(1-settings.aim)+dyg/glen*10*settings.aim;
+  p.vx*=settings.power;p.vy*=settings.power;
+ }else{
+  p.vx+=ovx*.25;p.vy+=ovy*.25;
+ }
+ const speed=Math.hypot(p.vx,p.vy);
+ if(speed>17){p.vx*=17/speed;p.vy*=17/speed}
+ if(arcade.hitTimer===0){
+  if(owner==="player"){arcade.shots++;arcade.lastHit="player"}else{arcade.aiShots++;arcade.lastHit="ai"}
+  sound(owner==="player"?480:340,.035,"triangle");
+  arcade.hitTimer=7;
+  if(particles.length<90)burst(p.x,p.y,owner==="player"?"#49caff":"#ff577c",4);
+ }
+}
+function updateHockey(){
+ const a=arcade,p=a.puck,e=a.enemy,ai=hockeyAISettings();
+ a.seconds=a.time/60;
+ if(a.hitTimer>0)a.hitTimer--;
+ if(a.goalFlash>0)a.goalFlash--;
+ if(a.shake>0)a.shake--;
+ if(a.goalCooldown>0)a.goalCooldown--;
+ const oldX=e.x,oldY=e.y;
+ if(--e.aiTimer<=0){
+  e.aiTimer=ai.reaction;
+  const dangerous=p.y<610||p.vy<-1;
+  const projectedX=hockeyBounceX(p.x,p.vx,Math.min(36,Math.abs((e.y-p.y)/(p.vy||1))));
+  const error=Math.sin(a.time*.11+e.x*.03)*ai.err;
+  if(dangerous){
+   e.tx=clamp(projectedX+error,92,908);
+   e.ty=clamp(p.y+p.vy*6-48,98,468);
+  }else{
+   e.tx=clamp(500+(p.x-500)*.32+error*.25,250,750);
+   e.ty=225;
+  }
+  if(Math.hypot(p.x-e.x,p.y-e.y)<ai.reach){
+   e.tx=clamp(projectedX+error*.2,92,908);
+   e.ty=clamp(p.y-30,90,468);
+  }
+ }
+ const ex=e.tx-e.x,ey=e.ty-e.y,ed=Math.hypot(ex,ey);
+ if(ed>.01){const step=Math.min(ai.speed,ed);e.x+=ex/ed*step;e.y+=ey/ed*step}
+ e.x=clamp(e.x,92,908);e.y=clamp(e.y,98,474);
+ e.vx=e.x-oldX;e.vy=e.y-oldY;
+ e.angle=Math.atan2(p.y-e.y,p.x-e.x);
+ if(a.goalCooldown===0){
+  // Sub-pași: pucul rapid nu traversează paletele ori pereții.
+  const substeps=2;
+  for(let i=0;i<substeps;i++){
+   p.x+=p.vx/substeps;p.y+=p.vy/substeps;
+   hockeyHit(player,"player",ai);hockeyHit(e,"ai",ai);
+   if(p.x<74||p.x>926){p.x=clamp(p.x,74,926);p.vx*=-.94;sound(240,.022)}
+   if(p.y<74||p.y>926){
+    if(Math.abs(p.x-500)<145){
+     const youScored=p.y<74;
+     if(youScored)a.goals++;else a.enemyGoals++;
+     a.goalFlash=65;a.shake=9;
+     notify(youScored?"🥅 GOOOL!":"🥅 GOL ADVERSAR!");
+     sound(youScored?1100:190,.22,"sawtooth");
+     if(navigator.vibrate)try{navigator.vibrate(youScored?[35,35,70]:[85])}catch{}
+     if(particles.length<90)burst(p.x,clamp(p.y,74,926),youScored?"#49caff":"#ff3355",18);
+     resetPuck();player.x=500;player.y=770;e.x=500;e.y=235;e.aiTimer=0;hockeyTouch.active=false;
+     if(a.goals>=hockeyGoalLimit||a.enemyGoals>=hockeyGoalLimit){hockeyRoundEnd(a.goals>a.enemyGoals)}
+     break;
+    }else{p.y=clamp(p.y,74,926);p.vy*=-.94;sound(260,.022)}
+   }
+  }
+  p.vx*=.998;p.vy*=.998;
+  if(Math.hypot(p.vx,p.vy)<1.4){p.vx+=Math.sin(a.time*.3)*.07;p.vy+=(p.y>500?-1:1)*.08}
+ }
+ if(a.time%2===0){a.puckTrail.push({x:p.x,y:p.y});if(a.puckTrail.length>11)a.puckTrail.shift()}
+ const remaining=hockeyTimeLimit?Math.max(0,hockeyTimeLimit-Math.floor(a.seconds)):0;
+ const clock=hockeyTimeLimit?` ⏱ ${Math.floor(remaining/60)}:${String(remaining%60).padStart(2,"0")}`:` ⏱ ${Math.floor(a.seconds/60)}:${String(Math.floor(a.seconds%60)).padStart(2,"0")}`;
+ arcadeStatus(`🏒 TU ${a.goals} : ${a.enemyGoals} AI  |  ${hockeyGoalLimit} goluri${clock}`);
+ $("score").textContent=a.goals;
+ if(a.time%30===0)arcadeScore(a.goals);
+ if(running&&hockeyTimeLimit&&a.seconds>=hockeyTimeLimit){
+  if(a.goals!==a.enemyGoals)hockeyRoundEnd(a.goals>a.enemyGoals);
+  else{a.time-=60*10;notify("EGAL! +10 secunde");}
+ }
+}
 
 // CINCI MINIGAME-URI NEON ARCADE
 function updateArcade(){
@@ -1160,82 +1362,7 @@ function updateArcade(){
   arcadeStatus("🐍 Energie: "+arcade.points+" | Coadă: "+arcade.snakeLength);
   if(arcade.points>=25)arcadeEnd(true,"Ai crescut șarpele neon!",80);
  }else if(mode==="hockey"){
-  const p=arcade.puck,e=arcade.enemy;
-  if(arcade.goalCooldown>0)arcade.goalCooldown--;
-  const ai={
-   easy:{speed:3.3,look:5,error:68,react:18,attack:.68,guard:.43},
-   mid:{speed:5.2,look:12,error:23,react:8,attack:1,guard:.55},
-   hard:{speed:7.4,look:22,error:3,react:3,attack:1.24,guard:.63}
-  }[difficulty]||{speed:5.2,look:12,error:23,react:8,attack:1,guard:.55};
-  // Proiectie cu reflexii de pereti, nu simpla urmarire a pucului.
-  function projectedPuckX(t){
-   let x=p.x+p.vx*t;
-   const low=70,high=MAP_SIZE-70,range=high-low;
-   x=(x-low)%(range*2);
-   if(x<0)x+=range*2;
-   return low+(x>range?range*2-x:x);
-  }
-  if(e.aiTimer===undefined)e.aiTimer=0;
-  if(--e.aiTimer<=0){
-   e.aiTimer=ai.react;
-   const danger=p.y<MAP_SIZE*.60||p.vy<-.7;
-   const interceptX=projectedPuckX(ai.look);
-   const noise=Math.sin(frame*.073+e.x*.011)*ai.error;
-   if(danger){
-    e.targetX=clamp(interceptX+noise,90,MAP_SIZE-90);
-    e.targetY=clamp(p.y+p.vy*ai.look*.45-37,110,MAP_SIZE*.50);
-   }else{
-    e.targetX=clamp(MAP_SIZE/2+(p.x-MAP_SIZE/2)*ai.guard+noise*.4,155,MAP_SIZE-155);
-    e.targetY=MAP_SIZE*.22;
-   }
-   if(Math.hypot(p.x-e.x,p.y-e.y)<175){
-    e.targetX=clamp(interceptX+noise*.2,85,MAP_SIZE-85);
-    e.targetY=clamp(p.y-30,80,MAP_SIZE*.51);
-   }
-  }
-  const ex=(e.targetX??500)-e.x,ey=(e.targetY??220)-e.y,ed=Math.hypot(ex,ey)||1;
-  const step=Math.min(ai.speed,ed);
-  e.x+=ex/ed*step;e.y+=ey/ed*step;
-  e.angle=Math.atan2(p.y-e.y,p.x-e.x);
-  e.x=clamp(e.x,90,MAP_SIZE-90);e.y=clamp(e.y,85,MAP_SIZE*.54);
-  // Reflexie fizica a pucului si suturi directionate spre poarta.
-  for(const orb of [player,e]){
-   const dx=p.x-orb.x,dy=p.y-orb.y,dist=Math.hypot(dx,dy)||1;
-   if(dist<orb.radius+15){
-    let nx=dx/dist,ny=dy/dist;
-    if(orb===e){
-     const goalX=MAP_SIZE/2+(difficulty==="hard"?Math.sin(frame*.019)*95:0);
-     const gx=goalX-p.x,gy=MAP_SIZE-p.y;
-     const gd=Math.hypot(gx,gy)||1;
-     nx=nx*.35+gx/gd*.65;ny=Math.abs(ny)*.2+gy/gd*.8;
-     const nd=Math.hypot(nx,ny)||1;nx/=nd;ny/=nd;
-     const force=8.1*ai.attack;
-     p.vx=nx*force;p.vy=Math.max(3,ny*force);
-    }else{
-     const jx=joystick.x||0,jy=joystick.y||0;
-     p.vx=nx*7.7+jx*3.5;p.vy=ny*7.7+jy*3.5;
-    }
-    p.x=orb.x+dx/dist*(orb.radius+16);
-    p.y=orb.y+dy/dist*(orb.radius+16);
-   }
-  }
-  if(arcade.goalCooldown===0){p.x+=p.vx;p.y+=p.vy}
-  p.vx*=.996;p.vy*=.996;
-  if(p.x<70||p.x>MAP_SIZE-70){p.x=clamp(p.x,70,MAP_SIZE-70);p.vx*=-.94}
-  if(p.y<60||p.y>MAP_SIZE-60){
-   if(Math.abs(p.x-MAP_SIZE/2)<145&&arcade.goalCooldown===0){
-    if(p.y<60){arcade.goals++;notify("GOL! +1")}
-    else{arcade.enemyGoals++;notify("GOL ADVERSAR!")}
-    resetPuck();player.x=MAP_SIZE/2;player.y=MAP_SIZE*.77;
-    e.x=MAP_SIZE/2;e.y=MAP_SIZE*.23;e.aiTimer=0;
-   }else{p.y=clamp(p.y,60,MAP_SIZE-60);p.vy*=-.94}
-  }
-  arcadeScore(arcade.goals);
-  arcadeStatus("🏒 TU "+arcade.goals+" : "+arcade.enemyGoals+" AI");
-  if(arcade.goals>=5||arcade.enemyGoals>=5){
-   const won=arcade.goals>=5;
-   arcadeEnd(won,won?"Ai câștigat meciul!":"AI a câștigat meciul!",won?90:10);
-  }
+  updateHockey();
  }else if(mode==="royale"){
   arcade.ring=Math.max(170,MAP_SIZE*.68-arcade.time*.11);
   const center=MAP_SIZE/2;
@@ -1286,15 +1413,28 @@ function drawArcadeExtras(foreground){
  }
  if(mode==="hockey"){
   if(!foreground){
-   const x=screenX(60),y=screenY(60),sz=(MAP_SIZE-120)*zoom;
-   ctx.strokeStyle="#49caff";ctx.lineWidth=3;ctx.strokeRect(x,y,sz,sz);
-   ctx.beginPath();ctx.moveTo(x,y+sz/2);ctx.lineTo(x+sz,y+sz/2);ctx.stroke();
-   ctx.beginPath();ctx.arc(screenX(MAP_SIZE/2),screenY(MAP_SIZE/2),100*zoom,0,TAU);ctx.stroke();
-   ctx.strokeStyle="#ffdd44";ctx.lineWidth=8;
-   ctx.beginPath();ctx.moveTo(screenX(MAP_SIZE/2-145),screenY(60));ctx.lineTo(screenX(MAP_SIZE/2+145),screenY(60));ctx.stroke();
-   ctx.beginPath();ctx.moveTo(screenX(MAP_SIZE/2-145),screenY(MAP_SIZE-60));ctx.lineTo(screenX(MAP_SIZE/2+145),screenY(MAP_SIZE-60));ctx.stroke();
+   const L=screenX(60),T=screenY(60),R=screenX(940),B=screenY(940),centerX=screenX(500),centerY=screenY(500);
+   ctx.fillStyle="rgba(7,28,55,.5)";ctx.fillRect(L,T,R-L,B-T);
+   ctx.strokeStyle="#49caff";ctx.lineWidth=4;ctx.shadowColor="#12b9ff";ctx.shadowBlur=8;ctx.strokeRect(L,T,R-L,B-T);ctx.shadowBlur=0;
+   ctx.strokeStyle="#a9dcff77";ctx.lineWidth=2;
+   ctx.beginPath();ctx.moveTo(L,centerY);ctx.lineTo(R,centerY);ctx.stroke();
+   ctx.beginPath();ctx.arc(centerX,centerY,100*zoom,0,TAU);ctx.stroke();
+   ctx.beginPath();ctx.arc(centerX,centerY,10*zoom,0,TAU);ctx.fillStyle="#ffe250";ctx.fill();
+   for(const y of [175,825]){
+    ctx.beginPath();ctx.arc(centerX,screenY(y),85*zoom,0,TAU);ctx.strokeStyle=y<500?"#ff456688":"#49caff88";ctx.stroke();
+   }
+   ctx.lineWidth=9;ctx.strokeStyle="#ffd745";ctx.shadowColor="#ffd745";ctx.shadowBlur=10;
+   for(const gy of [60,940]){ctx.beginPath();ctx.moveTo(screenX(355),screenY(gy));ctx.lineTo(screenX(645),screenY(gy));ctx.stroke()}
+   ctx.shadowBlur=0;
+   if(arcade.goalFlash>0){ctx.fillStyle=`rgba(${arcade.goals>=arcade.enemyGoals?"55,195,255":"255,70,90"},${(arcade.goalFlash/65*.18).toFixed(3)})`;ctx.fillRect(L,T,R-L,B-T)}
   }else if(arcade.puck){
-   const p=arcade.puck;drawOrb3D(screenX(p.x),screenY(p.y),14*zoom,"#ffe94a",0,false);
+   const trail=arcade.puckTrail;
+   for(let i=0;i<trail.length;i++){
+    const q=trail[i];ctx.globalAlpha=(i+1)/trail.length*.26;
+    ctx.fillStyle="#ffe254";ctx.beginPath();ctx.arc(screenX(q.x),screenY(q.y),(5+i*.55)*zoom,0,TAU);ctx.fill();
+   }
+   ctx.globalAlpha=1;
+   const p=arcade.puck;drawOrb3D(screenX(p.x),screenY(p.y),p.radius*zoom,"#ffe94a",0,false);
   }
  }
  if(mode==="royale"&&!foreground){
@@ -1354,13 +1494,13 @@ if(running)drawGame();
 // reducem puțin rezoluția, nu viteza jocului.
 if(delta>27){slowFrames++;fastFrames=0}
 else if(delta<19){fastFrames++;slowFrames=Math.max(0,slowFrames-1)}
-if(slowFrames>90&&quality>0.75){
-quality=.75;
+if(slowFrames>65&&quality>0.65){
+quality=quality>0.86?.85:.65;
 slowFrames=0;
 resize();
 }
-if(fastFrames>600&&quality<1){
-quality=1;
+if(fastFrames>900&&quality<1){
+quality=Math.min(1,quality+.15);
 fastFrames=0;
 resize();
 }
