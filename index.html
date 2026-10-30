@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#02040b">
+<meta name="screen-orientation" content="landscape">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>NEON DEVORATOR</title>
 <style>
 :root{--cyan:#49caff;--dark:#02040b;--bottom:env(safe-area-inset-bottom,0px);--left:env(safe-area-inset-left,0px);--right:env(safe-area-inset-right,0px)}
@@ -11,7 +14,8 @@
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--dark);color:white;font-family:Arial,sans-serif;overscroll-behavior:none}
 body{position:fixed;inset:0;touch-action:none;-webkit-user-select:none;user-select:none}
 canvas{display:block;touch-action:none}
-#game{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:auto}
+#game{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+body.hockey-active #game{pointer-events:auto;touch-action:none}
 .hidden{display:none!important}
 button{cursor:pointer;border:2px solid var(--cyan);border-radius:20px;background:#071b30;color:#66d9ff;font-weight:bold;padding:11px 18px;min-width:130px;touch-action:manipulation}
 button.selected,button:active{background:var(--cyan);color:#02111e}
@@ -37,9 +41,6 @@ label{color:#aac4d7;font-size:13px}
 #coinsText{color:#ffdb38}
 #minimap{position:fixed;top:12px;right:12px;width:90px;height:90px;z-index:5;border:2px solid var(--cyan);border-radius:12px;background:#030a15}
 #notice{position:fixed;top:17%;left:50%;transform:translateX(-50%);z-index:40;color:#55ffaa;font-weight:bold;text-align:center;pointer-events:none;text-shadow:0 0 15px #00ff99}
-#notice.hockeyGoal{top:50%;left:50%;transform:translate(-50%,-50%);width:max-content;max-width:92vw;font-size:clamp(26px,8vw,48px);padding:14px 20px;border-radius:18px;background:rgba(2,9,23,.78);border:2px solid #49caff;box-shadow:0 0 28px #49caff55;animation:goalPop .24s ease-out}
-#notice.hockeyGoal.enemyGoal{color:#ff6378;border-color:#ff6378;box-shadow:0 0 28px #ff637855}
-@keyframes goalPop{from{opacity:.2;transform:translate(-50%,-50%) scale(.75)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 .control{position:fixed;z-index:12;width:58px;height:58px;min-width:0;padding:0;border-radius:50%;background:#071a2cdd;touch-action:none;user-select:none;-webkit-user-select:none}
 #pauseBtn{top:115px;right:12px;width:46px;height:46px;color:#ffdb38;border-color:#ffdb38}
 #dashBtn{right:calc(15px + var(--right));bottom:calc(18px + var(--bottom))}
@@ -58,9 +59,57 @@ label{color:#aac4d7;font-size:13px}
 }
 #main>button{width:min(320px,88vw);min-height:52px;font-size:16px}#modesMenu>button,#hockeyMenu>button{width:min(320px,88vw);min-height:52px}#main #playBtn{font-size:19px;box-shadow:0 0 21px #49caff36}#modesMenuBtn,#hockeyMenuBtn{border-color:#ff4f88;color:#ff9fbe;background:#2a0b1e}#settingsBtn{border-color:#9a80ff;color:#ccbaff}.hockey-preview{font-size:52px;padding:14px 0;color:white}.hockey-preview span{font-size:18px;color:#a6bdd1;vertical-align:middle}.overlay{padding-top:max(20px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom))}#options{justify-content:flex-start}#options h1{margin-top:15px}#options .row{margin-bottom:10px}#options label{font-size:15px}#options input{width:min(300px,80vw)}
 #hockeyMenu .row button{min-width:115px;font-size:12px;padding:11px 10px}
-#hockeyTouchSurface{position:fixed;inset:0;z-index:9;touch-action:none!important;overscroll-behavior:none;background:transparent;-webkit-user-select:none;user-select:none}#hockeyTouchSurface.hidden{display:none!important}
 #hockeyRecord{color:#8de5ff!important}
 #hockeyStats{max-width:360px;padding:8px 14px;background:#061728;border-radius:12px}
+/* Ecran lat: joc si comenzi asezate pentru telefonul rotit. */
+#fullBtn{top:13px;right:118px;width:46px;height:46px;font-size:19px;color:#a7f4ff;border-color:#49caff}
+#rotatePrompt{z-index:160;background:rgba(2,5,16,.985);padding:22px;gap:14px}
+#rotatePrompt h2{margin:4px 0;color:#49caff;font-size:clamp(24px,7vw,38px)}
+#rotatePrompt p{max-width:390px;margin:0;color:#c9dfed}
+#rotatePrompt .rotate-icon{font-size:56px;animation:tiltPhone 2.3s ease-in-out infinite}
+#rotatePrompt button{max-width:310px;width:90%}
+@keyframes tiltPhone{0%,20%,100%{transform:rotate(0deg)}55%,80%{transform:rotate(-90deg)}}
+#notice{top:50%;font-size:clamp(19px,3.5vw,29px);min-width:200px}
+@media(orientation:landscape){
+ #main{flex-direction:row;flex-wrap:wrap;align-content:center;column-gap:12px;row-gap:7px;padding:12px 18px}
+ #main h1,#main p,#main>.row{flex-basis:100%;width:100%}
+ #main h1{font-size:clamp(23px,5vh,42px);margin:0}
+ #main p{margin:0;font-size:13px}
+ #main .row button{padding:6px 11px}
+ #main>button{width:min(260px,42vw);min-height:40px;font-size:15px}
+ #modesMenu,#hockeyMenu,#options,#shop,#pause,#gameover{justify-content:flex-start;padding:12px max(16px,env(safe-area-inset-right))}
+ .overlay h1{font-size:clamp(23px,7vh,39px);margin:2px 0}
+ .overlay p{margin:3px 0}
+ #hockeyMenu{gap:6px}
+ #hockeyMenu .hockey-preview{padding:1px 0;font-size:28px}
+ #hockeyMenu .row button{min-height:32px;padding:5px 10px}
+ #hockeyMenu>button{min-height:37px;padding:7px 15px}
+ #options{gap:5px}
+ #options .row{margin-bottom:1px}
+ #options button{padding:7px 12px}
+ #hud{top:calc(8px + env(safe-area-inset-top,0px));left:calc(12px + var(--left));font-size:12px;line-height:1.45}
+ #minimap{width:70px;height:70px;top:8px;right:calc(10px + var(--right))}
+ #pauseBtn{top:12px;right:calc(90px + var(--right));width:44px;height:44px}
+ #fullBtn{top:12px;right:calc(146px + var(--right))}
+ #joy{left:calc(25px + var(--left));bottom:calc(12px + var(--bottom));width:115px;height:115px}
+ #dashBtn{right:calc(18px + var(--right));bottom:calc(13px + var(--bottom))}
+ #skillBtn{right:calc(18px + var(--right));bottom:calc(79px + var(--bottom))}
+ #splitBtn{right:calc(18px + var(--right));bottom:calc(145px + var(--bottom))}
+ #freezeBtn{right:calc(84px + var(--right));bottom:calc(13px + var(--bottom))}
+ .control{width:52px;height:52px;font-size:11px}
+ body.hockey-active #hud{left:50%;transform:translateX(-50%);text-align:center;white-space:nowrap;background:#020b18aa;border-radius:12px;padding:5px 13px;top:calc(2px + env(safe-area-inset-top,0px));font-size:0;line-height:0}
+ body.hockey-active #hud>strong,body.hockey-active #hud #sizeLabel,body.hockey-active #hud #coinsText,body.hockey-active #hud #recordLabel,body.hockey-active #hud #record,body.hockey-active #hud #score,body.hockey-active #hud #modeHud{display:none}
+ body.hockey-active #hud #arcadeHud{display:block;font-size:clamp(13px,2.5vw,18px);line-height:1.3;color:#e7faff}
+ body.hockey-active #pauseBtn{right:calc(12px + var(--right));top:12px}
+ body.hockey-active #fullBtn{right:calc(66px + var(--right));top:12px}
+}
+@media(orientation:landscape) and (max-height:390px){
+ #main h1{font-size:24px}
+ #main>button{min-height:34px;padding:5px 12px}
+ #main{gap:5px}
+ #joy{width:94px;height:94px}
+ #hockeyMenu .hockey-preview{display:none}
+}
 </style>
 </head>
 <body>
@@ -76,8 +125,15 @@ label{color:#aac4d7;font-size:13px}
 </div>
 
 <div id="notice"></div>
-<div id="hockeyTouchSurface" class="hidden" aria-label="Controlează paleta Air Hockey cu degetul"></div>
+<div id="rotatePrompt" class="overlay hidden" role="dialog" aria-label="Rotește telefonul">
+ <div class="rotate-icon">📱</div>
+ <h2>ROTEȘTE TELEFONUL</h2>
+ <p>Întoarce telefonul pe orizontală pentru teren mai mare și un joc optimizat pentru LANDSCAPE.</p>
+ <button id="rotateFullBtn" class="primary">⛶ ECRAN COMPLET / ROTIRE</button>
+ <button id="portraitContinueBtn">CONTINUĂ VERTICAL</button>
+</div>
 <button class="control" id="pauseBtn">Ⅱ</button>
+<button class="control" id="fullBtn" title="Ecran complet / landscape">⛶</button>
 <button class="control" id="dashBtn">DASH</button>
 <button class="control" id="skillBtn">⚡</button>
 <button class="control" id="splitBtn">✂</button>
@@ -97,6 +153,7 @@ label{color:#aac4d7;font-size:13px}
 <button id="modesMenuBtn">🎮 MODURI DE JOC</button>
 <button id="settingsBtn">⚙ SETĂRI</button>
 <button id="shopBtn">🛒 MAGAZIN</button>
+<button id="landscapeBtn" style="border-color:#41db91;color:#9affe1">↔ ECRAN ORIZONTAL</button>
 </div>
 
 <div id="options" class="overlay hidden">
@@ -181,13 +238,11 @@ let quality=1;
 let slowFrames=0;
 let fastFrames=0;
 let floorGradient=null;
-// Camera Classic cu zonă liberă: arena rămâne fixă până când personajul ajunge aproape de marginea ecranului.
-let cameraX=1500,cameraY=1500;
 
 function resize(){
 W=innerWidth;
 H=innerHeight;
-DPR=Math.min(window.devicePixelRatio||1,mode==="hockey"?1.1:1.5)*quality;
+DPR=Math.min(window.devicePixelRatio||1,1.5)*quality;
 canvas.width=Math.round(W*DPR);
 canvas.height=Math.round(H*DPR);
 canvas.style.width=W+"px";
@@ -198,6 +253,7 @@ floorGradient=ctx.createLinearGradient(0,0,0,H);
 floorGradient.addColorStop(0,"#0a1122");
 floorGradient.addColorStop(1,"#02040b");
 resetJoystick();
+ if(typeof updateOrientationHint==="function")updateOrientationHint();
 }
 
 addEventListener("resize",resize);
@@ -262,7 +318,7 @@ winText:"Ai dominat arena!",bossNotice:"⚠ BOSS APĂRUT!",
 notEnough:"Nu ai suficiente monede!",
 none:"Fără aură",redAura:"Aura Roșie",cyanAura:"Aura Cyan",
 easy:"UȘOR",mid:"MEDIU",hard:"GREU",
-classicPlay:"▶ JOACĂ CLASSIC",hockeyMenu:"🏒 AIR HOCKEY",modesMenu:"🎮 MODURI DE JOC",modesTitle:"MODURI DE JOC",modesIntro:"Alege un mod suplimentar de joc.",settings:"⚙ SETĂRI",saveBack:"SALVEAZĂ ȘI ÎNAPOI",hockeyStart:"▶ START HOCKEY",hockeyIntro:"Joacă împotriva unui bot inteligent! Atinge terenul pentru a mișca paleta. Alege regula meciului.",settingsIntro:"Alege abilitatea pentru Classic, dificultatea și volumul."
+landscape:"↔ ECRAN ORIZONTAL",classicPlay:"▶ JOACĂ CLASSIC",hockeyMenu:"🏒 AIR HOCKEY",modesMenu:"🎮 MODURI DE JOC",modesTitle:"MODURI DE JOC",modesIntro:"Alege un mod suplimentar de joc.",settings:"⚙ SETĂRI",saveBack:"SALVEAZĂ ȘI ÎNAPOI",hockeyStart:"▶ START HOCKEY",hockeyIntro:"Joacă împotriva unui bot inteligent! Atinge terenul pentru a mișca paleta. Alege regula meciului.",settingsIntro:"Alege abilitatea pentru Classic, dificultatea și volumul."
 },
 en:{
 description:"Grow, devour smaller opponents and dominate the arena!",
@@ -280,7 +336,7 @@ winText:"You dominated the arena!",bossNotice:"⚠ BOSS APPEARED!",
 notEnough:"Not enough coins!",
 none:"No Aura",redAura:"Red Aura",cyanAura:"Cyan Aura",
 easy:"EASY",mid:"MEDIUM",hard:"HARD",
-classicPlay:"▶ PLAY CLASSIC",hockeyMenu:"🏒 AIR HOCKEY",modesMenu:"🎮 GAME MODES",modesTitle:"GAME MODES",modesIntro:"Choose an additional game mode.",settings:"⚙ SETTINGS",saveBack:"SAVE & BACK",hockeyStart:"▶ START HOCKEY",hockeyIntro:"Play against a smart AI! Touch the rink to control your striker. Choose your match rules.",settingsIntro:"Choose your Classic ability, difficulty and sound volume."
+landscape:"↔ LANDSCAPE MODE",classicPlay:"▶ PLAY CLASSIC",hockeyMenu:"🏒 AIR HOCKEY",modesMenu:"🎮 GAME MODES",modesTitle:"GAME MODES",modesIntro:"Choose an additional game mode.",settings:"⚙ SETTINGS",saveBack:"SAVE & BACK",hockeyStart:"▶ START HOCKEY",hockeyIntro:"Play against a smart AI! Touch the rink to control your striker. Choose your match rules.",settingsIntro:"Choose your Classic ability, difficulty and sound volume."
 },
 es:{
 description:"¡Crece, devora rivales más pequeños y domina la arena!",
@@ -298,7 +354,7 @@ winText:"¡Has dominado la arena!",bossNotice:"⚠ ¡JEFE APARECIÓ!",
 notEnough:"¡No tienes suficientes monedas!",
 none:"Sin aura",redAura:"Aura Roja",cyanAura:"Aura Cian",
 easy:"FÁCIL",mid:"MEDIO",hard:"DIFÍCIL",
-classicPlay:"▶ JUGAR CLASSIC",hockeyMenu:"🏒 AIR HOCKEY",modesMenu:"🎮 MODOS DE JUEGO",modesTitle:"MODOS DE JUEGO",modesIntro:"Elige un modo de juego adicional.",settings:"⚙ AJUSTES",saveBack:"GUARDAR Y VOLVER",hockeyStart:"▶ INICIAR HOCKEY",hockeyIntro:"¡Juega contra una IA inteligente! Toca la pista para mover tu paleta. Elige las reglas.",settingsIntro:"Elige habilidad de Classic, dificultad y volumen."
+landscape:"↔ MODO HORIZONTAL",classicPlay:"▶ JUGAR CLASSIC",hockeyMenu:"🏒 AIR HOCKEY",modesMenu:"🎮 MODOS DE JUEGO",modesTitle:"MODOS DE JUEGO",modesIntro:"Elige un modo de juego adicional.",settings:"⚙ AJUSTES",saveBack:"GUARDAR Y VOLVER",hockeyStart:"▶ INICIAR HOCKEY",hockeyIntro:"¡Juega contra una IA inteligente! Toca la pista para mover tu paleta. Elige las reglas.",settingsIntro:"Elige habilidad de Classic, dificultad y volumen."
 }
 };
 const t=()=>translations[language];
@@ -307,16 +363,17 @@ function showScreen(id){
 ["main","options","modesMenu","hockeyMenu","shop","pause","gameover"].forEach(name=>
 $(name).classList.toggle("hidden",name!==id));
 const playing=id===null;
-["hud","minimap","pauseBtn","dashBtn","skillBtn","splitBtn","freezeBtn","joy"]
+["hud","minimap","pauseBtn","fullBtn","dashBtn","skillBtn","splitBtn","freezeBtn","joy"]
 .forEach(name=>$(name).classList.toggle("hidden",!playing || (mode==="hockey" && name!=="hud" && name!=="pauseBtn")));
 if(playing&&mode==="hockey")$("minimap").classList.add("hidden");
-$("hockeyTouchSurface").classList.toggle("hidden",!(playing&&mode==="hockey"));
+ document.body.classList.toggle("hockey-active",playing&&mode==="hockey");
+ updateOrientationHint();
 }
 
 function translateGame(){
 const tr=t();
 const texts={
-mainDescription:tr.description,playBtn:tr.classicPlay,shopBtn:tr.shop,
+mainDescription:tr.description,playBtn:tr.classicPlay,shopBtn:tr.shop,landscapeBtn:tr.landscape,
 optionsTitle:tr.settings||tr.options,settingsIntro:tr.settingsIntro,
 hockeyIntro:tr.hockeyIntro,hockeyMenuBtn:tr.hockeyMenu,modesMenuBtn:tr.modesMenu,modesTitle:tr.modesTitle,modesIntro:tr.modesIntro,modesBackBtn:tr.back,settingsBtn:tr.settings,
 hockeyStartBtn:tr.hockeyStart,hockeyBackBtn:tr.back,
@@ -391,12 +448,10 @@ container.appendChild(div);
 }
 
 let noticeTimer;
-function notify(message,goalType=""){
- const el=$("notice");
- el.className=goalType?("hockeyGoal"+(goalType==="enemy"?" enemyGoal":"")):"";
- el.textContent=message;
- clearTimeout(noticeTimer);
- noticeTimer=setTimeout(()=>{el.textContent="";el.className=""},goalType?1500:2200);
+function notify(message){
+$("notice").textContent=message;
+clearTimeout(noticeTimer);
+noticeTimer=setTimeout(()=>$("notice").textContent="",2200);
 }
 
 $("playBtn").onclick=()=>{mode="classic";startGame()};
@@ -459,6 +514,33 @@ let frame=0,zoom=1;
 let spawnProtection=0,dashCooldown=0,skillCooldown=0;
 let skillTimer=0,freezeTimer=0,dashTimer=0,bossSpawned=false;
 let coinsDirty=false,recordValue=0;
+// Pe Android Chrome, landscape poate fi blocat DOAR cand browserul permite
+// fullscreen + Screen Orientation API. Daca nu, cerem rotirea manuala.
+let portraitAllowed=false;
+function updateOrientationHint(){
+ const el=$("rotatePrompt");
+ if(!el)return;
+ const inPortrait=innerHeight>innerWidth+30;
+ el.classList.toggle("hidden",!(running&&!paused&&inPortrait&&!portraitAllowed));
+}
+async function requestLandscapeMode(){
+ try{
+  if(!document.fullscreenElement&&document.documentElement.requestFullscreen){
+   await document.documentElement.requestFullscreen({navigationUI:"hide"});
+  }
+ }catch{}
+ try{
+  if(screen.orientation&&typeof screen.orientation.lock==="function")await screen.orientation.lock("landscape");
+ }catch{}
+ updateOrientationHint();
+}
+$("landscapeBtn").onclick=()=>requestLandscapeMode();
+$("fullBtn").onclick=()=>requestLandscapeMode();
+$("rotateFullBtn").onclick=()=>requestLandscapeMode();
+$("portraitContinueBtn").onclick=()=>{portraitAllowed=true;updateOrientationHint()};
+addEventListener("orientationchange",()=>{portraitAllowed=false;setTimeout(updateOrientationHint,150)});
+addEventListener("fullscreenchange",()=>{setTimeout(()=>{resize();updateOrientationHint()},100)});
+
 const arcadeModes=new Set(["hockey"]);
 let arcade={};
 function arcadeReward(amount){
@@ -501,79 +583,41 @@ function hockeyRoundEnd(won){
  $("hockeyStats").textContent=`🏒 ${arcade.goals} - ${arcade.enemyGoals}  |  ⏱ ${Math.floor(arcade.seconds/60)}:${String(Math.floor(arcade.seconds%60)).padStart(2,"0")}  |  Șuturi: ${arcade.shots}  |  Goluri/șuturi: ${accuracy}%  |  Serie: ${streak}`;
  updateHockeyRecords();
 }
-// Control tactil Android/iPhone: touch events sunt prioritare; pointer/mouse sunt fallback.
-// Ascultam pe document in capture, astfel incat atingerea merge si in browser-ele
-// care nu trimit pointerdown direct pe canvas.
-const hockeyTouch={active:false,id:null,kind:null,x:500,y:770,lastX:0,lastY:0};
-function hockeyViewScale(){
- // Terenul ramane fix si complet vizibil pe orice dimensiune de ecran.
- return Math.max(.12,Math.min((W-20)/920,(H-28)/920));
+// Control direct: coordonate ecran -> arena, pe jumătatea jucătorului.
+const hockeyTouch={active:false,id:null,x:500,y:770};
+// Terenul Hockey e intors pe orizontala: TU in stanga, AI in dreapta.
+// x/y din fizica raman neschimbate; doar proiectia pe ecran este landscape.
+let hockeyViewCache={w:-1,h:-1,sx:1,sy:1};
+function hockeyView(){
+ if(hockeyViewCache.w===W&&hockeyViewCache.h===H)return hockeyViewCache;
+ const marginX=Math.max(18,Math.min(42,W*.035));
+ const marginY=Math.max(20,Math.min(35,H*.07));
+ hockeyViewCache={w:W,h:H,sx:Math.max(.1,(W-2*marginX)/920),sy:Math.max(.1,(H-2*marginY)/920)};
+ return hockeyViewCache;
 }
-function hockeyTouchBegin(cx,cy){
- // Nu teleportam paleta la deget: miscarea incepe exact de unde este paleta.
- hockeyTouch.lastX=cx;hockeyTouch.lastY=cy;
- hockeyTouch.x=player.x;hockeyTouch.y=player.y;
-}
+function hockeyPX(y){return W/2-(y-500)*hockeyView().sx}
+function hockeyPY(x){return H/2+(x-500)*hockeyView().sy}
 function hockeyPointerPosition(cx,cy){
- const scale=hockeyViewScale();
- // Folosim diferenta de deplasare dintre atingeri, nu pozitia absoluta.
- // Asa paleta nu sare la atingere si functioneaza inclusiv pe ecrane inguste.
- const dx=clamp((cx-hockeyTouch.lastX)/scale,-140,140);
- const dy=clamp((cy-hockeyTouch.lastY)/scale,-140,140);
- hockeyTouch.lastX=cx;hockeyTouch.lastY=cy;
- hockeyTouch.x=clamp(hockeyTouch.x+dx,92,908);
- hockeyTouch.y=clamp(hockeyTouch.y+dy,525,902);
+ const v=hockeyView();
+ hockeyTouch.x=clamp(500+(cy-H/2)/v.sy,92,908);
+ hockeyTouch.y=clamp(500-(cx-W/2)/v.sx,525,902);
 }
-function hockeyCanTouch(target){
- if(mode!=="hockey"||!running||paused)return false;
- // Nu interceptam butonul PAUZA sau alte elemente interactive.
- return !(target&&target.closest&&target.closest("button, input, select, textarea, .overlay"));
-}
-function hockeyRelease(){
- hockeyTouch.active=false;hockeyTouch.id=null;hockeyTouch.kind=null;
-}
-document.addEventListener("touchstart",e=>{
- if(!hockeyCanTouch(e.target)||hockeyTouch.active)return;
- // Atingerile in zona de joc, inclusiv deasupra terenului, misca paleta.
- const t=e.changedTouches[0];if(!t)return;
- hockeyTouch.active=true;hockeyTouch.kind="touch";hockeyTouch.id=t.identifier;
- hockeyTouchBegin(t.clientX,t.clientY);
- if(e.cancelable)e.preventDefault();
-},{passive:false,capture:true});
-document.addEventListener("touchmove",e=>{
- if(!hockeyTouch.active||hockeyTouch.kind!=="touch")return;
- for(const t of e.changedTouches){if(t.identifier===hockeyTouch.id){
-  hockeyPointerPosition(t.clientX,t.clientY);
-  if(e.cancelable)e.preventDefault();break;
- }}
-},{passive:false,capture:true});
-function hockeyTouchEnd(e){
- if(!hockeyTouch.active||hockeyTouch.kind!=="touch")return;
- for(const t of e.changedTouches)if(t.identifier===hockeyTouch.id){hockeyRelease();break}
-}
-document.addEventListener("touchend",hockeyTouchEnd,{passive:true,capture:true});
-document.addEventListener("touchcancel",hockeyTouchEnd,{passive:true,capture:true});
-// Pointer Events pentru stylus si browsere care nu au Touch Events.
-$("hockeyTouchSurface").addEventListener("pointerdown",e=>{
- if(!hockeyCanTouch(e.target)||hockeyTouch.active)return;
+canvas.addEventListener("pointerdown",e=>{
+ if(mode!=="hockey"||!running||paused||hockeyTouch.active)return;
  if(e.pointerType==="mouse"&&e.button!==0)return;
- hockeyTouch.active=true;hockeyTouch.kind="pointer";hockeyTouch.id=e.pointerId;
- hockeyTouchBegin(e.clientX,e.clientY);
- try{$("hockeyTouchSurface").setPointerCapture(e.pointerId)}catch{}
- if(e.cancelable)e.preventDefault();
+ hockeyTouch.active=true;hockeyTouch.id=e.pointerId;hockeyPointerPosition(e.clientX,e.clientY);
+ try{canvas.setPointerCapture(e.pointerId)}catch{}e.preventDefault();
 });
-document.addEventListener("pointermove",e=>{
- if(hockeyTouch.active&&hockeyTouch.kind==="pointer"&&hockeyTouch.id===e.pointerId){
-  hockeyPointerPosition(e.clientX,e.clientY);
-  if(e.cancelable)e.preventDefault();
- }
-},{passive:false});
-for(const name of ["pointerup","pointercancel"]){
- document.addEventListener(name,e=>{
-  if(hockeyTouch.kind==="pointer"&&hockeyTouch.id===e.pointerId)hockeyRelease();
- });
+canvas.addEventListener("pointermove",e=>{if(hockeyTouch.active&&hockeyTouch.id===e.pointerId){hockeyPointerPosition(e.clientX,e.clientY);e.preventDefault()}});
+function hockeyPointerEnd(e){if(hockeyTouch.id===e.pointerId){hockeyTouch.active=false;hockeyTouch.id=null}}
+canvas.addEventListener("pointerup",hockeyPointerEnd);canvas.addEventListener("pointercancel",hockeyPointerEnd);
+// Fallback Android WebView fara PointerEvent; fara a dubla evenimentele pointer.
+if(!window.PointerEvent){
+ canvas.addEventListener("touchstart",e=>{if(mode!=="hockey"||!running||paused||hockeyTouch.active)return;const t=e.changedTouches[0];if(!t)return;hockeyTouch.active=true;hockeyTouch.id=t.identifier;hockeyPointerPosition(t.clientX,t.clientY);e.preventDefault()},{passive:false});
+ canvas.addEventListener("touchmove",e=>{if(!hockeyTouch.active)return;for(const t of e.changedTouches)if(t.identifier===hockeyTouch.id){hockeyPointerPosition(t.clientX,t.clientY);e.preventDefault();break}},{passive:false});
+ const endTouch=e=>{for(const t of e.changedTouches)if(t.identifier===hockeyTouch.id){hockeyTouch.active=false;hockeyTouch.id=null;break}};
+ canvas.addEventListener("touchend",endTouch);canvas.addEventListener("touchcancel",endTouch);
 }
-window.addEventListener("blur",()=>{if(hockeyTouch.active)hockeyRelease()});
 
 
 function recordKey(){return "nd_rec_"+mode}
@@ -647,13 +691,12 @@ for(let i=0;i<22;i++)bots.push(createBot());
 }
 if(mode==="classic")for(let i=0;i<380;i++)food.push(createFood());
 spawnPlayer();
-cameraX=player.x;cameraY=player.y;
-if(arcadeModes.has(mode)){initArcade();zoom=hockeyViewScale();notify("🏒 Glisează degetul pe teren pentru a mișca paleta!");}else arcadeStatus("");
+if(arcadeModes.has(mode))initArcade();else arcadeStatus("");
 running=true;paused=false;
-resize(); // Selectam rezolutia potrivita modului, fara a schimba comenzile.
 $("modeHud").textContent=mode.toUpperCase();
 updateRecord();updateScore();refreshCoins();
 showScreen(null);resetJoystick();
+ requestLandscapeMode();
 }
 
 $("retryBtn").onclick=startGame;
@@ -682,19 +725,6 @@ resetJoystick();showScreen("main");
 
 const joyElement=$("joy"),knob=$("knob");
 const joystick={active:false,pointerId:null,touchId:null,x:0,y:0};
-function placeFloatingJoystick(x,y){
- const r=joyElement.getBoundingClientRect().width/2;
- const centerX=clamp(x,r+6,innerWidth-r-6);
- const centerY=clamp(y,r+6,innerHeight-r-6);
- joyElement.style.left=(centerX-r)+"px";
- joyElement.style.top=(centerY-r)+"px";
- joyElement.style.bottom="auto";
-}
-function restoreJoystickPosition(){
- joyElement.style.left="";
- joyElement.style.top="";
- joyElement.style.bottom="";
-}
 
 function resetJoystick(){
 joystick.active=false;
@@ -702,7 +732,6 @@ joystick.pointerId=null;
 joystick.touchId=null;
 joystick.x=0;joystick.y=0;
 if(knob)knob.style.transform="translate3d(0,0,0)";
-restoreJoystickPosition();
 }
 function setJoystickPosition(clientX,clientY){
 const rect=joyElement.getBoundingClientRect();
@@ -721,13 +750,12 @@ knob.style.transform=`translate3d(${joystick.x*max}px,${joystick.y*max}px,0)`;
 // Android WebView / APK: touch events are the primary control path.
 // The finger remains tracked even if it moves outside the joystick circle.
 function joystickTouchStart(e){
- if(!running||paused||mode==="hockey"||joystick.active)return;
+ if(!running||paused||joystick.active)return;
  const touch=e.changedTouches[0];
  if(!touch)return;
  e.preventDefault();e.stopPropagation();
  joystick.active=true;
  joystick.touchId=touch.identifier;
- placeFloatingJoystick(touch.clientX,touch.clientY);
  setJoystickPosition(touch.clientX,touch.clientY);
 }
 function joystickTouchMove(e){
@@ -750,14 +778,7 @@ function joystickTouchEnd(e){
   }
  }
 }
-// Joystick mobil: poate fi pornit oriunde in jumatatea stanga-jos a ecranului.
-document.addEventListener("touchstart",e=>{
- if(!running||paused||mode==="hockey"||joystick.active)return;
- const touch=e.changedTouches[0];
- if(!touch||touch.clientX>innerWidth*.53||touch.clientY<innerHeight*.38)return;
- if(e.target.closest("button,input,.overlay"))return;
- joystickTouchStart(e);
-},{passive:false});
+joyElement.addEventListener("touchstart",joystickTouchStart,{passive:false});
 document.addEventListener("touchmove",joystickTouchMove,{passive:false});
 document.addEventListener("touchend",joystickTouchEnd,{passive:false});
 document.addEventListener("touchcancel",joystickTouchEnd,{passive:false});
@@ -898,20 +919,6 @@ ctx.fillStyle="#06101c";
 ctx.beginPath();ctx.arc(ex+fx*r*.07,ey+fy*r*.07,r*.095,0,TAU);ctx.fill();
 }
 }
-// Hockey: chip fix pe ecran. Ochii si pupilele nu depind de joystick ori viteza.
-function drawHockeyFace(x,y,r,color,isEnemy){
- drawOrb3D(x,y,r,color,0,false);
- if(r<5)return;
- const sign=isEnemy?1:-1;
- const eyeY=y+sign*r*.31;
- const pupilY=eyeY+sign*r*.065;
- const eyeOffset=r*.32;
- const eyeR=r*.185;
- ctx.fillStyle="#ffffff";
- ctx.beginPath();ctx.arc(x-eyeOffset,eyeY,eyeR,0,TAU);ctx.arc(x+eyeOffset,eyeY,eyeR,0,TAU);ctx.fill();
- ctx.fillStyle="#06101c";
- ctx.beginPath();ctx.arc(x-eyeOffset,pupilY,eyeR*.48,0,TAU);ctx.arc(x+eyeOffset,pupilY,eyeR*.48,0,TAU);ctx.fill();
-}
 function drawFood3D(x,y,r,color){
 if(r<1)return;
 ctx.fillStyle=color;
@@ -927,8 +934,8 @@ ctx.fill();
 function drawFloor(){
 ctx.fillStyle=floorGradient||"#040813";ctx.fillRect(0,0,W,H);
 const spacing=Math.max(35,100*zoom);
-const ox=((-cameraX*zoom)%spacing+spacing)%spacing;
-const oy=((-cameraY*zoom)%spacing+spacing)%spacing;
+const ox=((-player.x*zoom)%spacing+spacing)%spacing;
+const oy=((-player.y*zoom)%spacing+spacing)%spacing;
 ctx.strokeStyle="#22a5e526";
 ctx.lineWidth=1;
 ctx.beginPath();
@@ -936,15 +943,8 @@ for(let x=ox;x<W;x+=spacing){ctx.moveTo(x,0);ctx.lineTo(x,H)}
 for(let y=oy;y<H;y+=spacing){ctx.moveTo(0,y);ctx.lineTo(W,y)}
 ctx.stroke();
 }
-function screenX(x){return(x-(mode==="hockey"?500:cameraX))*zoom+W/2}
-function screenY(y){return(y-(mode==="hockey"?500:cameraY))*zoom+H/2}
-function updateClassicCamera(){
- // Camera originala din Classic: urmareste jucatorul in centrul ecranului.
- if(mode!=="hockey"){
-  cameraX=player.x;
-  cameraY=player.y;
- }
-}
+function screenX(x){return(x-(mode==="hockey"?500:player.x))*zoom+W/2}
+function screenY(y){return(y-(mode==="hockey"?500:player.y))*zoom+H/2}
 function visible(x,y,r=30){
 return x>-r&&y>-r&&x<W+r&&y<H+r;
 }
@@ -988,7 +988,7 @@ if(mode==="hockey"){
  }
  player.x=clamp(player.x,92,908);player.y=clamp(player.y,525,902);
  player.vx=player.x-ox;player.vy=player.y-oy;
- player.angle=-Math.PI/2; // Air Hockey: ochii ramân orientati fix spre poarta adversa.
+ player.angle=Math.atan2(player.vy,player.vx);
  player.trail.length=0;
  return;
 }
@@ -1000,13 +1000,7 @@ if(keys.s||keys.arrowdown)dy=1;
 if(keys.a||keys.arrowleft)dx=-1;
 if(keys.d||keys.arrowright)dx=1;
 const length=Math.hypot(dx,dy);
-if(length>0){
- dx/=length;dy/=length;
- // Rotire lina a personajului in Classic, fara salt brusc la schimbarea directiei.
- const desired=Math.atan2(dy,dx);
- const difference=Math.atan2(Math.sin(desired-player.angle),Math.cos(desired-player.angle));
- player.angle+=clamp(difference,-0.085,0.085);
-}
+if(length>0){dx/=length;dy/=length;player.angle=Math.atan2(dy,dx)}
 if(mode==="snake"){
  if(length>0){
   const old=arcade.lastDir;
@@ -1237,7 +1231,6 @@ bossSpawned=true;notify(t().bossNotice);
 }
 const targetZoom=Math.max(.25,30/player.radius);
 zoom+=(targetZoom-zoom)*.1;
-updateClassicCamera();
 updateScore();
 if(player.radius>=200||(mode==="pacman"&&food.length===0)){
 gameOver(true);return;
@@ -1249,7 +1242,8 @@ $("skillBtn").style.opacity=skillCooldown>0?".5":"1";
 if(frame%120===0)flushProgress();
 }
 function drawGame(){
-if(mode==="hockey"){ctx.fillStyle="#040d1d";ctx.fillRect(0,0,W,H)}else drawFloor();
+if(mode==="hockey"){drawHockeyLandscape();return}
+drawFloor();
 if(arcadeModes.has(mode))drawArcadeExtras(false);
 if(mode==="pacman")drawWalls();
 for(const trail of player.trail){
@@ -1271,7 +1265,7 @@ const x=screenX(b.x),y=screenY(b.y),r=b.radius*zoom;
 if(visible(x,y,r))drawOrb3D(x,y,r,b.color,b.angle);
 }
 if(mode==="hockey"&&arcade.enemy){
- const e=arcade.enemy;drawHockeyFace(screenX(e.x),screenY(e.y),e.radius*zoom,e.color,true);
+ const e=arcade.enemy;drawOrb3D(screenX(e.x),screenY(e.y),e.radius*zoom,e.color,e.angle);
 }
 for(const g of guards){
 const x=screenX(g.x),y=screenY(g.y),r=g.radius*zoom;
@@ -1285,7 +1279,7 @@ ctx.fillStyle=p.color;
 ctx.fillRect(x,y,Math.max(2,3*zoom),Math.max(2,3*zoom));
 }
 ctx.globalAlpha=1;
-const cx=screenX(player.x),cy=screenY(player.y);
+const cx=mode==="hockey"?screenX(player.x):W/2,cy=mode==="hockey"?screenY(player.y):H/2;
 let r=player.radius*zoom;
 if(skill==="giant"&&skillTimer>0)r*=1.5;
 if(spawnProtection>0){
@@ -1303,8 +1297,7 @@ ctx.arc(cx,cy,r+14,0,TAU);
 ctx.stroke();
 }
 if(skill==="ghost"&&skillTimer>0)ctx.globalAlpha=.48;
-if(mode==="hockey")drawHockeyFace(cx,cy,r,hockeySkinColor(),false);
-else drawOrb3D(cx,cy,r,player.color,player.angle);
+drawOrb3D(cx,cy,r,mode==="hockey"?hockeySkinColor():player.color,player.angle);
 ctx.globalAlpha=1;
 if(arcadeModes.has(mode))drawArcadeExtras(true);
 if(mode!=="hockey"&&frame%4===0)drawMinimap();
@@ -1332,36 +1325,33 @@ function hockeyBounceX(x,vx,frames){
  return min+(next>range?range*2-next:next);
 }
 function hockeyHit(orb,owner,settings){
- const p=arcade.puck;
- const dx=p.x-orb.x,dy=p.y-orb.y;
- const min=orb.radius+p.radius;
- const dist2=dx*dx+dy*dy;
- if(dist2>=min*min)return;
- const d=Math.sqrt(dist2),nx=d>.0001?dx/d:0,ny=d>.0001?dy/d:(owner==="ai"?1:-1);
- // Elimina suprapunerea fara a face pucul sa sara prin paleta.
- p.x=orb.x+nx*(min+.12);p.y=orb.y+ny*(min+.12);
+ const p=arcade.puck,dx=p.x-orb.x,dy=p.y-orb.y,min=orb.radius+p.radius;
+ const d=Math.hypot(dx,dy);
+ if(d>=min)return;
+ let nx=dx/(d||1),ny=dy/(d||1);
+ if(d<.01){nx=0;ny=owner==="ai"?1:-1}
+ p.x=orb.x+nx*(min+.4);p.y=orb.y+ny*(min+.4);
  const ovx=orb.vx||0,ovy=orb.vy||0;
- const toward=(p.vx-ovx)*nx+(p.vy-ovy)*ny;
- // Impuls numai daca obiectele se apropie: fara accelerare la fiecare cadru.
- if(toward>=0)return;
- const impulse=Math.min(18,Math.max(1.8,-toward*1.56));
- p.vx+=nx*impulse+ovx*.12;
- p.vy+=ny*impulse+ovy*.12;
+ const impact=p.vx*nx+p.vy*ny;
+ const relative=impact-(ovx*nx+ovy*ny);
+ const impulse=Math.max(2.8,-relative*1.75);
+ p.vx+=nx*impulse+ovx*.27;p.vy+=ny*impulse+ovy*.27;
  if(owner==="ai"){
-  const goalX=500+(difficulty==="hard"?Math.sin(arcade.time*.029)*65:0);
-  const gx=goalX-p.x,gy=945-p.y,gd=Math.hypot(gx,gy)||1;
-  p.vx=p.vx*(1-settings.aim*.55)+gx/gd*9*settings.aim*.55;
-  p.vy=p.vy*(1-settings.aim*.55)+gy/gd*9*settings.aim*.55;
+  const aimX=500+(difficulty==="hard"?Math.sin(arcade.time*.035)*85:0);
+  const dxg=aimX-p.x,dyg=945-p.y,glen=Math.hypot(dxg,dyg)||1;
+  p.vx=p.vx*(1-settings.aim)+dxg/glen*10*settings.aim;
+  p.vy=p.vy*(1-settings.aim)+dyg/glen*10*settings.aim;
   p.vx*=settings.power;p.vy*=settings.power;
+ }else{
+  p.vx+=ovx*.25;p.vy+=ovy*.25;
  }
- const speed=Math.hypot(p.vx,p.vy),limit=16;
- if(speed>limit){p.vx*=limit/speed;p.vy*=limit/speed}
+ const speed=Math.hypot(p.vx,p.vy);
+ if(speed>17){p.vx*=17/speed;p.vy*=17/speed}
  if(arcade.hitTimer===0){
-  if(owner==="player"){arcade.shots++;arcade.lastHit="player"}
-  else{arcade.aiShots++;arcade.lastHit="ai"}
+  if(owner==="player"){arcade.shots++;arcade.lastHit="player"}else{arcade.aiShots++;arcade.lastHit="ai"}
   sound(owner==="player"?480:340,.035,"triangle");
-  arcade.hitTimer=6;
-  if(particles.length<60)burst(p.x,p.y,owner==="player"?"#49caff":"#ff577c",3);
+  arcade.hitTimer=7;
+  if(particles.length<90)burst(p.x,p.y,owner==="player"?"#49caff":"#ff577c",4);
  }
 }
 function updateHockey(){
@@ -1393,27 +1383,27 @@ function updateHockey(){
  if(ed>.01){const step=Math.min(ai.speed,ed);e.x+=ex/ed*step;e.y+=ey/ed*step}
  e.x=clamp(e.x,92,908);e.y=clamp(e.y,98,474);
  e.vx=e.x-oldX;e.vy=e.y-oldY;
- e.angle=Math.PI/2; // Air Hockey: botul priveste fix spre jucator.
+ e.angle=Math.atan2(p.y-e.y,p.x-e.x);
  if(a.goalCooldown===0){
   // Sub-pași: pucul rapid nu traversează paletele ori pereții.
-  const substeps=Math.max(2,Math.min(4,Math.ceil(Math.hypot(p.vx,p.vy)/5)));
+  const substeps=2;
   for(let i=0;i<substeps;i++){
    p.x+=p.vx/substeps;p.y+=p.vy/substeps;
    hockeyHit(player,"player",ai);hockeyHit(e,"ai",ai);
-   if(p.x<74||p.x>926){p.x=clamp(p.x,74,926);p.vx*=-.94;if(a.time%8===0)sound(240,.022)}
+   if(p.x<74||p.x>926){p.x=clamp(p.x,74,926);p.vx*=-.94;sound(240,.022)}
    if(p.y<74||p.y>926){
     if(Math.abs(p.x-500)<145){
      const youScored=p.y<74;
      if(youScored)a.goals++;else a.enemyGoals++;
      a.goalFlash=65;a.shake=9;
-     notify(youScored?"🥅 GOOOL!":"🥅 GOL ADVERSAR!",youScored?"player":"enemy");
+     notify(youScored?"🥅 GOOOL!":"🥅 GOL ADVERSAR!");
      sound(youScored?1100:190,.22,"sawtooth");
      if(navigator.vibrate)try{navigator.vibrate(youScored?[35,35,70]:[85])}catch{}
      if(particles.length<90)burst(p.x,clamp(p.y,74,926),youScored?"#49caff":"#ff3355",18);
      resetPuck();player.x=500;player.y=770;e.x=500;e.y=235;e.aiTimer=0;hockeyTouch.active=false;
      if(a.goals>=hockeyGoalLimit||a.enemyGoals>=hockeyGoalLimit){hockeyRoundEnd(a.goals>a.enemyGoals)}
      break;
-    }else{p.y=clamp(p.y,74,926);p.vy*=-.94;if(a.time%8===0)sound(260,.022)}
+    }else{p.y=clamp(p.y,74,926);p.vy*=-.94;sound(260,.022)}
    }
   }
   p.vx*=.998;p.vy*=.998;
@@ -1422,7 +1412,7 @@ function updateHockey(){
  if(a.time%2===0){a.puckTrail.push({x:p.x,y:p.y});if(a.puckTrail.length>11)a.puckTrail.shift()}
  const remaining=hockeyTimeLimit?Math.max(0,hockeyTimeLimit-Math.floor(a.seconds)):0;
  const clock=hockeyTimeLimit?` ⏱ ${Math.floor(remaining/60)}:${String(remaining%60).padStart(2,"0")}`:` ⏱ ${Math.floor(a.seconds/60)}:${String(Math.floor(a.seconds%60)).padStart(2,"0")}`;
- if(a.time%8===0)arcadeStatus(`🏒 TU ${a.goals} : ${a.enemyGoals} AI  |  ${hockeyGoalLimit} goluri${clock}`);
+ arcadeStatus(`🏒 TU ${a.goals} : ${a.enemyGoals} AI  |  ${hockeyGoalLimit} goluri${clock}`);
  $("score").textContent=a.goals;
  if(a.time%30===0)arcadeScore(a.goals);
  if(running&&hockeyTimeLimit&&a.seconds>=hockeyTimeLimit){
@@ -1522,30 +1512,81 @@ function updateArcade(){
   if(bots.length===0)arcadeEnd(true,"Ești ultimul supraviețuitor!",150);
  }
  if(running){
-  const targetZoom=mode==="hockey"?hockeyViewScale():Math.max(.38,30/player.radius);
-  zoom=mode==="hockey"?targetZoom:zoom+(targetZoom-zoom)*.08;
+  const targetZoom=mode==="hockey"?Math.min(W,H)/1100:Math.max(.38,30/player.radius);
+  zoom+=(targetZoom-zoom)*.08;
   if(frame%15===0){$("dashBtn").style.opacity=dashCooldown>0?".5":"1";$("skillBtn").style.opacity=skillCooldown>0?".5":"1"}
  }
 }
-let hockeyRinkCache=null;
-function getHockeyRink(){
- if(hockeyRinkCache)return hockeyRinkCache;
- const c=document.createElement("canvas");c.width=880;c.height=880;
- const g=c.getContext("2d");
- g.fillStyle="#071c37";g.fillRect(0,0,880,880);
- const gradient=g.createLinearGradient(0,0,0,880);
- gradient.addColorStop(0,"#17152e");gradient.addColorStop(.5,"#082035");gradient.addColorStop(1,"#071b32");
- g.fillStyle=gradient;g.fillRect(0,0,880,880);
- g.strokeStyle="#49caff";g.lineWidth=7;g.strokeRect(4,4,872,872);
- g.strokeStyle="#a9dcff99";g.lineWidth=3;
- g.beginPath();g.moveTo(0,440);g.lineTo(880,440);g.stroke();
- g.beginPath();g.arc(440,440,100,0,Math.PI*2);g.stroke();
- g.fillStyle="#ffe250";g.beginPath();g.arc(440,440,10,0,Math.PI*2);g.fill();
- for(const y of [115,765]){g.beginPath();g.arc(440,y,85,0,Math.PI*2);g.strokeStyle=y<440?"#ff456699":"#49caff99";g.stroke()}
- g.lineWidth=10;g.strokeStyle="#ffdf56";
- for(const gy of [0,880]){g.beginPath();g.moveTo(295,gy);g.lineTo(585,gy);g.stroke()}
- hockeyRinkCache=c;return c;
+// Air Hockey in format WIDE: camera fixa, terenul umple ecranul landscape.
+// Formele raman CIRCULARE chiar daca arena este mai lata pe axa orizontala.
+function drawHockeyLandscape(){
+ ctx.fillStyle="#020916";ctx.fillRect(0,0,W,H);
+ const v=hockeyView(),left=hockeyPX(940),right=hockeyPX(60),top=hockeyPY(60),bottom=hockeyPY(940);
+ const centerX=W/2,centerY=H/2;
+ const r=Math.min(v.sx,v.sy);
+ // Baza terenului si grila subtire (fara shadowBlur costisitor per frame).
+ ctx.fillStyle="#071d32";ctx.fillRect(left,top,right-left,bottom-top);
+ ctx.lineWidth=1;ctx.strokeStyle="#19435b70";
+ ctx.beginPath();
+ for(let i=1;i<8;i++){
+  const x=left+(right-left)*i/8;ctx.moveTo(x,top);ctx.lineTo(x,bottom);
+  const y=top+(bottom-top)*i/8;ctx.moveTo(left,y);ctx.lineTo(right,y);
+ }
+ ctx.stroke();
+ // Linia centrală separa jucatorul (stanga) de AI (dreapta).
+ ctx.strokeStyle="#8ddaffaa";ctx.lineWidth=2;
+ ctx.beginPath();ctx.moveTo(centerX,top);ctx.lineTo(centerX,bottom);ctx.stroke();
+ ctx.beginPath();ctx.arc(centerX,centerY,Math.max(30,90*r),0,TAU);ctx.stroke();
+ ctx.fillStyle="#ffe159";ctx.beginPath();ctx.arc(centerX,centerY,Math.max(3,7*r),0,TAU);ctx.fill();
+ // Zona defensiva pe ambele parti.
+ ctx.strokeStyle="#4bd0ff77";
+ ctx.beginPath();ctx.arc(hockeyPX(815),centerY,Math.max(23,70*r),0,TAU);ctx.stroke();
+ ctx.strokeStyle="#ff577b77";
+ ctx.beginPath();ctx.arc(hockeyPX(175),centerY,Math.max(23,70*r),0,TAU);ctx.stroke();
+ ctx.lineWidth=4;ctx.strokeStyle="#49caff";ctx.strokeRect(left,top,right-left,bottom-top);
+ // Portile sunt in stanga (ale tale) si dreapta (ale AI-ului).
+ const goalHalf=145*v.sy;
+ ctx.lineWidth=Math.max(6,9*r);
+ ctx.strokeStyle="#4ad6ff";ctx.beginPath();ctx.moveTo(left,centerY-goalHalf);ctx.lineTo(left,centerY+goalHalf);ctx.stroke();
+ ctx.strokeStyle="#ff557d";ctx.beginPath();ctx.moveTo(right,centerY-goalHalf);ctx.lineTo(right,centerY+goalHalf);ctx.stroke();
+ ctx.font=`bold ${Math.max(13,Math.min(24,H*.044))}px Arial`;
+ ctx.textAlign="center";ctx.fillStyle="#49caffa8";
+ ctx.fillText("TU",left+(right-left)*.13,top+Math.max(24,31*r));
+ ctx.fillStyle="#ff6c91a8";
+ ctx.fillText("AI",right-(right-left)*.13,top+Math.max(24,31*r));
+ // Particulele de impact, desenate la coordonatele transformate.
+ for(const p of particles){
+  const x=hockeyPX(p.y),y=hockeyPY(p.x);
+  ctx.globalAlpha=Math.max(0,p.life/25);
+  ctx.fillStyle=p.color;ctx.fillRect(x,y,Math.max(2,3*r),Math.max(2,3*r));
+ }
+ ctx.globalAlpha=1;
+ // Urma pucului e limitata si ieftina pentru Android.
+ for(let i=0;i<arcade.puckTrail.length;i++){
+  const p=arcade.puckTrail[i];
+  ctx.globalAlpha=(i+1)/arcade.puckTrail.length*.23;
+  ctx.fillStyle="#ffe25c";
+  ctx.beginPath();ctx.arc(hockeyPX(p.y),hockeyPY(p.x),Math.max(3,(4+i*.48)*r),0,TAU);ctx.fill();
+ }
+ ctx.globalAlpha=1;
+ if(arcade.enemy){
+  const e=arcade.enemy;
+  drawOrb3D(hockeyPX(e.y),hockeyPY(e.x),Math.max(13,e.radius*r),e.color,Math.PI);
+ }
+ if(player){
+  drawOrb3D(hockeyPX(player.y),hockeyPY(player.x),Math.max(13,player.radius*r),hockeySkinColor(),0);
+ }
+ if(arcade.puck){
+  const p=arcade.puck;
+  drawOrb3D(hockeyPX(p.y),hockeyPY(p.x),Math.max(7,p.radius*r),"#ffe94a",0,false);
+ }
+ if(arcade.goalFlash>0){
+  ctx.fillStyle=`rgba(${arcade.goals>=arcade.enemyGoals?"55,195,255":"255,70,90"},${Math.min(.20,arcade.goalFlash/65*.14)})`;
+  ctx.fillRect(left,top,right-left,bottom-top);
+ }
+ ctx.textAlign="start";
 }
+
 function drawArcadeExtras(foreground){
  if(mode==="snake"&&foreground){
   const seg=arcade.segments;
@@ -1556,12 +1597,20 @@ function drawArcadeExtras(foreground){
  }
  if(mode==="hockey"){
   if(!foreground){
-   const L=screenX(60),T=screenY(60),size=880*zoom;
-   ctx.drawImage(getHockeyRink(),L,T,size,size);
-   if(arcade.goalFlash>0){
-    ctx.fillStyle=`rgba(${arcade.goals>=arcade.enemyGoals?"55,195,255":"255,70,90"},${(arcade.goalFlash/65*.16).toFixed(3)})`;
-    ctx.fillRect(L,T,size,size);
+   const L=screenX(60),T=screenY(60),R=screenX(940),B=screenY(940),centerX=screenX(500),centerY=screenY(500);
+   ctx.fillStyle="rgba(7,28,55,.5)";ctx.fillRect(L,T,R-L,B-T);
+   ctx.strokeStyle="#49caff";ctx.lineWidth=4;ctx.shadowColor="#12b9ff";ctx.shadowBlur=8;ctx.strokeRect(L,T,R-L,B-T);ctx.shadowBlur=0;
+   ctx.strokeStyle="#a9dcff77";ctx.lineWidth=2;
+   ctx.beginPath();ctx.moveTo(L,centerY);ctx.lineTo(R,centerY);ctx.stroke();
+   ctx.beginPath();ctx.arc(centerX,centerY,100*zoom,0,TAU);ctx.stroke();
+   ctx.beginPath();ctx.arc(centerX,centerY,10*zoom,0,TAU);ctx.fillStyle="#ffe250";ctx.fill();
+   for(const y of [175,825]){
+    ctx.beginPath();ctx.arc(centerX,screenY(y),85*zoom,0,TAU);ctx.strokeStyle=y<500?"#ff456688":"#49caff88";ctx.stroke();
    }
+   ctx.lineWidth=9;ctx.strokeStyle="#ffd745";ctx.shadowColor="#ffd745";ctx.shadowBlur=10;
+   for(const gy of [60,940]){ctx.beginPath();ctx.moveTo(screenX(355),screenY(gy));ctx.lineTo(screenX(645),screenY(gy));ctx.stroke()}
+   ctx.shadowBlur=0;
+   if(arcade.goalFlash>0){ctx.fillStyle=`rgba(${arcade.goals>=arcade.enemyGoals?"55,195,255":"255,70,90"},${(arcade.goalFlash/65*.18).toFixed(3)})`;ctx.fillRect(L,T,R-L,B-T)}
   }else if(arcade.puck){
    const trail=arcade.puckTrail;
    for(let i=0;i<trail.length;i++){
